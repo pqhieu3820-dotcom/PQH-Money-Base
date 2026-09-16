@@ -138,3 +138,9 @@ chọn danh mục, ghi chú, ngày) dạng slide-up, ẩn thanh nav khi đang nh
   Test bằng cách tạm seed 8 giao dịch mẫu qua console để kiểm tra layout với dữ liệu
   phong phú (nhiều danh mục, biểu đồ có 2 cột rõ rệt) — xác nhận khớp ảnh mẫu, sau đó
   xoá dữ liệu test khỏi localStorage trước khi push.
+- **15:15 chiều, 16/9/2026** — Người dùng gửi ảnh cận cảnh 2 icon tìm kiếm + chuông
+  thông báo trên header Trang chủ, yêu cầu làm giống hệt. Thay emoji 🔍🔔 bằng SVG
+  line-icon đen mảnh không nền tròn (trước đó bọc trong nút tròn `.icon-btn` có nền
+  khi nhấn — bỏ nền, chỉ giữ hiệu ứng mờ khi nhấn), tăng khoảng cách giữa 2 icon,
+  và chỉnh badge số thông báo màu đỏ nổi đè lên góc trên-phải chuông (viền trắng)
+  giống hệt ảnh. Test hiện thử badge "435" qua console để xác nhận vị trí đúng.
