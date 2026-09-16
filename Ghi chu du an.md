@@ -10,7 +10,8 @@
 ## Cấu trúc thư mục
 ```
 backend/
-  Code.gs        # Google Apps Script (doGet/doPost, ghi/đọc Sheet "Chi Tieu")
+  Code.gs        # Google Apps Script (doGet/doPost đọc/ghi trực tiếp sheet thật
+                 # "DATA MONEY BASE (KHÔNG XÓA)" > tab "Sổ giao dịch")
 frontend/
   index.html     # Giao diện PWA (mobile-first, layout kiểu Money Lover: màn hình chính + form nhập)
   style.css      # Theme trắng/xám nhạt, nhấn xanh lá (giống Money Lover)
@@ -52,12 +53,38 @@ Layout giống Money Lover, tách thành 4 màn hình riêng theo 4 tab điều 
 Nút **+** tròn xanh lá ở giữa thanh điều hướng mở màn nhập giao dịch (bàn phím số,
 chọn danh mục, ghi chú, ngày) dạng slide-up, ẩn thanh nav khi đang nhập.
 
-## Việc cần làm để chạy thật
-1. Mở Apps Script project ở link trên (đăng nhập pqhieu3820@gmail.com), dán/cập nhật nội dung `backend/Code.gs`.
-2. Deploy → New deployment → Type: Web app → Execute as: Me → Who has access: Anyone.
-3. Copy URL deployment (`.../exec`) → dán vào hằng số `API_URL` ở đầu file `frontend/app.js`.
-4. Sheet (link ở trên) sẽ tự tạo tab "Chi Tieu" với cột: ID | Ngày | Số tiền | Danh mục | Ghi chú.
-5. Deploy phần `frontend/` lên GitHub Pages (hoặc bất kỳ static host nào có HTTPS) để cài PWA trên iOS (Add to Home Screen).
+## Backend thật — dữ liệu Money Lover 8 năm (2018-2026)
+- Sheet "DATA MONEY BASE (KHÔNG XÓA)" có 3 tab: **Sổ giao dịch** (nguồn dữ liệu
+  chính, 5173 dòng, đã đồng bộ từ Money Lover), **Khoản thu**/**Khoản chi** (chỉ là
+  pivot tổng hợp tự động theo Nhóm, KHÔNG phải nguồn dữ liệu — không cần đụng tới).
+- Cột "Sổ giao dịch" (A→K): `Id | Ngày | Nhóm | Số tiền | Đơn vị tiền tệ | Ví |
+  Ghi chú | Với | Sự kiện | Không tính vào báo cáo | Thành viên`.
+- **Quy ước Id có sẵn trong dữ liệu cũ:** Id = 1 luôn là giao dịch MỚI NHẤT, số tăng
+  dần về quá khứ (Id=5173 là giao dịch cũ nhất, 02/11/2018). Đây là quy ước riêng
+  của lần export/sync ban đầu từ Money Lover, không phải logic tự tạo — `Code.gs`
+  phải tôn trọng đúng quy ước này khi ghi thêm giao dịch mới (xem bên dưới).
+- **API Apps Script đã deploy thật**, đọc/ghi trực tiếp sheet trên (không dùng sheet
+  "Chi Tieu" placeholder cũ nữa):
+  - GET `.../exec` → 50 giao dịch mới nhất; `?limit=N` → N giao dịch; `?full=1` →
+    toàn bộ 5173+ giao dịch (dùng để đồng bộ về local 1 lần).
+  - POST `.../exec` (body: mảng JSON giao dịch mới) → **chèn ở đầu bảng** (ngay
+    dưới header, không nối cuối) rồi **dịch Id của toàn bộ giao dịch cũ lên +k**
+    (k = số giao dịch mới trong lô) để giữ đúng quy ước "Id nhỏ nhất = mới nhất".
+    Đã test 2 chiều thành công: GET trả đúng `total:5173`, POST chèn đúng vị trí +
+    dịch Id chính xác, không làm hỏng dữ liệu cũ.
+- `API_URL` trong `frontend/app.js` đã được điền URL deploy thật (không còn là
+  placeholder `AKfycb.../exec`).
+
+## Việc cần làm tiếp theo
+1. Ánh xạ danh mục: `CATEGORIES` trong `app.js` hiện là danh sách cố định 9 mục
+   (food/shopping/...) bằng tiếng Anh, trong khi dữ liệu Money Lover thật dùng tên
+   danh mục tiếng Việt tự do (vd "Bữa tối", "Hoá đơn điện thoại", "Dịch vụ gia đình"…
+   — nhiều hơn 9 mục rất nhiều). Cần cân nhắc đổi `CATEGORIES` thành danh sách động
+   lấy từ dữ liệu thật, hoặc chấp nhận hiển thị tên danh mục thô cho giao dịch cũ.
+2. Deploy phần `frontend/` lên GitHub Pages (hoặc static host có HTTPS) để cài PWA
+   trên iOS (Add to Home Screen).
+3. Cân nhắc đồng bộ toàn bộ 5173 giao dịch cũ về `localStorage` (`?full=1`) để xem
+   lịch sử đầy đủ trong app thay vì chỉ 50 giao dịch gần nhất.
 
 ## Lưu ý kỹ thuật
 - Apps Script tự thêm CORS header cho response JSON của doGet/doPost khi deploy "Anyone" — không cần cấu hình thêm.
@@ -73,7 +100,8 @@ chọn danh mục, ghi chú, ngày) dạng slide-up, ẩn thanh nav khi đang nh
 - [x] Offline-first hoàn chỉnh: sw.js cache bền vững + app.js đồng bộ qua 3 trigger + nhãn Online/Offline (2026-09-16)
 - [x] Tách 4 tab (Trang chủ/Giao dịch/Ngân sách/Tài khoản) thành 4 màn hình riêng đầy đủ chức năng (2026-09-16)
 - [x] Dựng lại Trang chủ giống hệt ảnh chụp Money Lover thật (2026-09-16)
-- [ ] Điền `API_URL` thật sau khi deploy Apps Script
+- [x] Kết nối backend thật vào sheet dữ liệu Money Lover 8 năm, deploy Apps Script 2 chiều, điền `API_URL` thật (2026-09-16)
+- [ ] Ánh xạ danh mục tiếng Việt thật vào `CATEGORIES` (xem mục "Việc cần làm tiếp theo")
 - [ ] Test cài đặt PWA trên iOS Safari
 
 ## Lỗi đã gặp — tránh lặp lại
@@ -91,6 +119,30 @@ chọn danh mục, ghi chú, ngày) dạng slide-up, ẩn thanh nav khi đang nh
   cũ vì `sw.js` cache-first các file tĩnh. → Khi test local sau mỗi lần sửa
   HTML/CSS/JS, phải unregister service worker + xoá Cache Storage (hoặc hard reload)
   trước khi chụp/kiểm tra kết quả.
+- **Paste vào Apps Script editor (Monaco) có thể làm hỏng 1 ký tự:** Khi dùng
+  clipboard.writeText() + Ctrl+V để dán code dài vào Apps Script (qua Claude in
+  Chrome), một lần bị lỗi "rov[9]" thay vì "row[9]" (mất 1 ký tự, không rõ nguyên
+  nhân — có thể do autocomplete của Monaco can thiệp giữa lúc paste). Hậu quả: API
+  báo lỗi `"rov is not defined"` dù source gốc hoàn toàn đúng. → **Sau khi paste
+  code dài vào Apps Script, luôn diff lại bằng `monaco.editor.getModels()[0].getValue()`
+  so với bản gốc (hash hoặc includes() các đoạn quan trọng) trước khi deploy**, hoặc
+  an toàn hơn: dùng `model.setValue(text)` trực tiếp qua JS thay vì mô phỏng
+  Ctrl+A/Ctrl+V (đáng tin cậy hơn nhiều, đã áp dụng lần 2 và không còn lỗi).
+- **Dropdown "chọn hàm để chạy" trong Apps Script editor không phản hồi click chuột
+  đáng tin cậy:** Click vào option trong dropdown này (qua Claude in Chrome) nhiều
+  lần không đổi hàm được chọn (label vẫn hiện hàm cũ), khiến bấm "Chạy" chạy nhầm
+  hàm. Chỉ hoạt động khi dùng phím mũi tên (ArrowDown/ArrowDown/Enter) để chọn thay
+  vì click toạ độ. → Với dropdown dạng này trên Apps Script, ưu tiên điều hướng bằng
+  bàn phím (ArrowDown, Enter) hơn là click chuột theo toạ độ; luôn zoom/kiểm tra lại
+  label hiển thị trước khi bấm Chạy để chắc chắn đúng hàm.
+- **Gõ phím điều hướng khi không chắc focus đang ở đâu có thể phá code:** Một lần
+  gửi "ArrowDown ArrowDown Enter" tưởng là điều khiển dropdown nhưng thực chất rơi
+  vào Monaco editor (đang giữ focus từ thao tác trước đó), làm mất 1 ký tự "c" của
+  từ khoá `const` và chèn 1 ký tự "c" thừa ở dòng khác → code lỗi cú pháp, Apps
+  Script báo "không lưu được". → Trước khi gửi phím điều khiển UI (không phải gõ
+  text), luôn xác nhận lại phần tử đang có focus (screenshot/zoom) thay vì giả định;
+  nếu nghi ngờ code bị ảnh hưởng, ngay lập tức verify lại bằng
+  `monaco.editor.getModels()[0].getValue()` trước khi lưu/deploy.
 
 ## Nhật ký chỉnh sửa (theo thời gian thực)
 > Ghi lại từ **13:59 chiều, 16/9/2026** trở đi (các việc làm trước mốc này được
@@ -161,3 +213,28 @@ chọn danh mục, ghi chú, ngày) dạng slide-up, ẩn thanh nav khi đang nh
   `offlineQueue`), sau đó giả lập có mạng lại qua sự kiện `visibilitychange` và gọi
   tay `syncOfflineData()` — xác nhận cả 2 đều kích hoạt request POST thật (thấy lỗi
   CORS trong console vì `API_URL` còn là placeholder, chứng tỏ request đã được gửi).
+- **16:00–18:22 chiều, 16/9/2026** — Người dùng cho xem ảnh chụp Google Sheet
+  "DATA MONEY BASE (KHÔNG XÓA)" chứa dữ liệu Money Lover đồng bộ suốt 8 năm (2018–
+  2026), yêu cầu đọc hiểu quy trình tạo ID và đồng bộ vào local; sau đó yêu cầu dùng
+  Claude in Chrome (tài khoản Google thật của user) để tương tác trực tiếp và tạo
+  API Script đồng bộ 2 chiều. Thực hiện:
+  - Mở sheet bằng Chrome thật (đã đăng nhập pqhieu3820@gmail.com), xác nhận đây
+    chính là file đã lưu ở mục "Google Sheet (database)"; đọc cấu trúc tab "Sổ giao
+    dịch" (5173 dòng) và quy ước Id (xem mục "Backend thật" ở trên).
+  - Viết lại toàn bộ `backend/Code.gs` để đọc/ghi trực tiếp sheet thật thay vì sheet
+    "Chi Tieu" placeholder cũ; mở Apps Script project có sẵn (link đã lưu), dán code
+    qua Chrome, xin phép người dùng trước khi bấm chấp thuận OAuth (người dùng tự
+    xác nhận quyền), chạy thử `doGet` thành công.
+  - Deploy Web App (Execute as: Me, Access: Anyone), test GET/POST thật — phát hiện
+    và sửa 2 sự cố trong lúc paste/chạy code qua UI (xem mục "Lỗi đã gặp" ở trên: ký
+    tự bị mất khi paste, dropdown chọn hàm không đáng tin cậy, phím điều hướng gõ
+    nhầm vào editor). Dùng `monaco.editor.getModels()[0].setValue()` trực tiếp qua
+    JS để đảm bảo code chính xác tuyệt đối, verify bằng includes()/hash trước khi
+    deploy mỗi phiên bản.
+  - Test 1 giao dịch thật qua POST (chèn đúng đầu bảng, dịch Id chính xác), sau đó
+    dọn dẹp: xoá giao dịch test + khôi phục đúng Id ban đầu bằng 1 endpoint cleanup
+    tạm thời (`?action=cleanup_temp_row2`), xác nhận qua GET `total:5173` khớp số
+    liệu gốc, rồi gỡ bỏ nhánh cleanup khỏi code và deploy lại bản sạch (Phiên bản 4).
+  - Điền `API_URL` thật vào `frontend/app.js`. Ghi chú việc cần làm tiếp theo: ánh
+    xạ danh mục tiếng Việt thật (khác với `CATEGORIES` cố định hiện tại) và cân nhắc
+    đồng bộ toàn bộ 5173 giao dịch về local qua `?full=1`.

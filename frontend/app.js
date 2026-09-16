@@ -1,7 +1,7 @@
 // ==== Money Base — app.js ====
 
-// TODO: Dán URL Web App (Google Apps Script deployment) vào đây
-const API_URL = 'https://script.google.com/macros/s/AKfycb.../exec';
+// URL Web App thật, đọc/ghi trực tiếp sheet "DATA MONEY BASE (KHÔNG XÓA)" > tab "Sổ giao dịch"
+const API_URL = 'https://script.google.com/macros/s/AKfycbzybTJPHcvTqxKOIM5FB-GLh9yi5Z2-zjYWV_swG6HeG-ZcUv5K_Lh0zBi3QMs_6m5g/exec';
 
 const LS_QUEUE_KEY = 'offlineQueue';
 const LS_HISTORY_KEY = 'moneybase_history_cache';
