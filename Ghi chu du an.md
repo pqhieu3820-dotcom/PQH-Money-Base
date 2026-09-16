@@ -31,8 +31,16 @@ Unregister service worker + Clear storage) hoặc hard-reload, vì `sw.js` cache
 
 ## Giao diện
 Layout giống Money Lover, tách thành 4 màn hình riêng theo 4 tab điều hướng dưới:
-1. **Trang chủ** — dashboard: số dư tổng, tổng tiền vào/ra tháng này, top danh mục
-   chi tiêu nhiều nhất (thanh tiến độ), 5 giao dịch gần đây + nút "Xem tất cả".
+1. **Trang chủ** — dựng lại giống hệt ảnh chụp màn hình "Tổng quan" của Money Lover
+   thật: số dư to + icon ẩn/hiện (mắt), tìm kiếm, chuông thông báo; card "Ví của tôi"
+   (Tiền mặt = số dư thật, Tiết Kiệm = placeholder tĩnh 0đ, chưa có tính năng đa ví
+   thật); card "Báo cáo tháng này" với toggle Tuần/Tháng, số tổng đã chi, badge %
+   tăng/giảm so với kỳ trước, biểu đồ cột so sánh kỳ trước/kỳ này; card "Chi tiêu
+   nhiều nhất" (icon màu theo danh mục + % trên tổng chi kỳ đó, không thanh tiến độ);
+   "Giao dịch gần đây" (tiêu đề = ghi chú hoặc tên danh mục, ngày đầy đủ bên dưới);
+   card "Money Insider" (chi tiêu theo danh mục cao nhất, trung bình/ngày, % so với
+   tháng trước, 2 nút placeholder "Xu hướng chi tiêu"/"Đăng ký ngay" — chưa có logic
+   thật, chỉ hiện toast "sắp ra mắt").
 2. **Giao dịch** — danh sách đầy đủ, có tab Tháng trước/Tháng này/Tương lai, thẻ
    tổng tiền vào/ra/chênh lệch, danh sách gom theo ngày.
 3. **Ngân sách** — đặt hạn mức chi tiêu theo từng danh mục (lưu trong `localStorage`
@@ -62,6 +70,7 @@ chọn danh mục, ghi chú, ngày) dạng slide-up, ẩn thanh nav khi đang nh
 - [x] Push code lên GitHub repo trên (2026-09-16)
 - [x] Redesign UI giống Money Lover, test qua browser mobile viewport (2026-09-16)
 - [x] Tách 4 tab (Trang chủ/Giao dịch/Ngân sách/Tài khoản) thành 4 màn hình riêng đầy đủ chức năng (2026-09-16)
+- [x] Dựng lại Trang chủ giống hệt ảnh chụp Money Lover thật (2026-09-16)
 - [ ] Điền `API_URL` thật sau khi deploy Apps Script
 - [ ] Test cài đặt PWA trên iOS Safari
 
@@ -105,3 +114,13 @@ chọn danh mục, ghi chú, ngày) dạng slide-up, ẩn thanh nav khi đang nh
   mức theo danh mục, thanh tiến độ, lưu `localStorage`), Tài khoản (trạng thái đồng bộ,
   nút đồng bộ thủ công, link Google Sheet/GitHub, thông tin app). Test cả 4 màn qua
   browser mobile viewport, xác nhận điều hướng và dữ liệu hiển thị đúng.
+- **14:27 chiều, 16/9/2026** — Người dùng gửi 3 ảnh chụp màn hình "Tổng quan" của
+  Money Lover thật, yêu cầu làm Trang chủ giống hệt (số liệu có thể dùng placeholder,
+  nối API thật sau). Dựng lại toàn bộ header (số dư to + mắt ẩn/hiện + tìm kiếm +
+  chuông), card Ví của tôi, card Báo cáo tháng này (toggle Tuần/Tháng + biểu đồ cột
+  so sánh kỳ trước/kỳ này + badge % thay đổi), card Chi tiêu nhiều nhất (% trên tổng,
+  không thanh tiến độ, icon màu theo danh mục), Giao dịch gần đây (ngày đầy đủ), và
+  card Money Insider. Sửa lỗi nhãn "Tháng trước/Tháng này" không đổi theo khi bấm
+  toggle "Tuần" — đã fix để nhãn + tiêu đề đổi động theo `state.reportScope`.
+  Test qua browser mobile viewport (bao gồm test nút ẩn số dư và toggle tuần/tháng)
+  trước khi push.

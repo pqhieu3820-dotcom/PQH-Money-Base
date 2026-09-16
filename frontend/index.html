@@ -28,43 +28,96 @@
   <section id="view-home" class="screen active">
 
     <header class="home-header">
-      <button class="wallet-pill">
-        <span class="wallet-dot"></span>
-        <span>Tiền mặt</span>
-        <span class="chevron">⌄</span>
-      </button>
-      <div class="header-actions">
+      <div class="header-balance-row">
+        <div class="header-balance-main">
+          <span id="home-balance-amount" class="header-balance-amount">0 ₫</span>
+          <button id="balance-eye" class="eye-btn" aria-label="Ẩn/hiện số dư">👁</button>
+        </div>
+        <div class="header-actions">
+          <button class="icon-btn" id="btn-search" aria-label="Tìm kiếm">🔍</button>
+          <button class="icon-btn icon-btn-bell" id="btn-bell" aria-label="Thông báo">
+            🔔<span id="bell-badge" class="bell-badge hidden">0</span>
+          </button>
+        </div>
+      </div>
+      <div class="header-balance-sub">
+        <span>Tổng số dư</span>
+        <span class="info-dot">?</span>
         <span id="sync-indicator" class="sync-indicator" title="Trạng thái đồng bộ"></span>
-        <button class="icon-btn" aria-label="Menu">⋮</button>
       </div>
     </header>
 
     <div class="home-scroll">
-      <div class="balance-block">
-        <div class="balance-label">Số dư</div>
-        <div id="home-balance-amount" class="balance-amount">0 ₫</div>
-      </div>
 
-      <div class="summary-card">
-        <div class="summary-row">
-          <span class="summary-label">Tiền vào tháng này</span>
-          <span id="home-summary-in" class="summary-value in">+0 ₫</span>
-        </div>
-        <div class="summary-row">
-          <span class="summary-label">Tiền ra tháng này</span>
-          <span id="home-summary-out" class="summary-value out">-0 ₫</span>
+      <!-- Ví của tôi -->
+      <div class="section-block">
+        <div class="wallet-card">
+          <div class="wallet-card-head">
+            <span>Ví của tôi</span>
+            <button class="section-action">Xem tất cả</button>
+          </div>
+          <div id="wallet-list" class="wallet-list"></div>
         </div>
       </div>
 
+      <!-- Báo cáo tháng này -->
       <div class="section-block">
         <div class="section-heading">
-          <span>Chi tiêu theo danh mục</span>
-          <span class="section-sub">Tháng này</span>
+          <span>Báo cáo tháng này</span>
+          <button class="section-action">Xem báo cáo</button>
         </div>
-        <div id="top-categories" class="top-categories"></div>
-        <div id="top-categories-empty" class="mini-empty hidden">Chưa có chi tiêu tháng này</div>
+        <div class="report-card">
+          <div class="period-toggle">
+            <button class="period-toggle-btn" data-scope="week">Tuần</button>
+            <button class="period-toggle-btn active" data-scope="month">Tháng</button>
+          </div>
+          <div class="report-total-row">
+            <div>
+              <div id="report-total-spent" class="report-total-amount">0 ₫</div>
+              <div id="report-total-label" class="report-total-label">Tổng đã chi tháng này</div>
+            </div>
+            <div id="report-change-badge" class="report-change-badge">— 0%</div>
+          </div>
+          <div class="chart-wrap">
+            <div class="chart-axis-top" id="chart-axis-top">0</div>
+            <div class="chart-bars">
+              <div class="chart-bar-col">
+                <div id="chart-bar-last" class="chart-bar chart-bar-last"></div>
+                <div id="chart-label-last" class="chart-bar-label">Tháng trước</div>
+              </div>
+              <div class="chart-bar-col">
+                <div id="chart-bar-this" class="chart-bar chart-bar-this"></div>
+                <div id="chart-label-this" class="chart-bar-label">Tháng này</div>
+              </div>
+            </div>
+            <div class="chart-axis-zero">0</div>
+          </div>
+          <div class="report-carousel">
+            <span class="carousel-arrow">‹</span>
+            <span class="carousel-title">Báo cáo chi tiêu</span>
+            <span class="carousel-arrow">›</span>
+          </div>
+          <div class="carousel-dots"><span class="dot active"></span><span class="dot"></span></div>
+        </div>
       </div>
 
+      <!-- Chi tiêu nhiều nhất -->
+      <div class="section-block">
+        <div class="section-heading">
+          <span>Chi tiêu nhiều nhất</span>
+          <button id="see-budget" class="section-action">Xem chi tiết</button>
+        </div>
+        <div class="report-card">
+          <div class="period-toggle">
+            <button class="period-toggle-btn" data-top-scope="week">Tuần</button>
+            <button class="period-toggle-btn active" data-top-scope="month">Tháng</button>
+          </div>
+          <div id="top-categories" class="top-categories"></div>
+          <div id="top-categories-empty" class="mini-empty hidden">Chưa có chi tiêu kỳ này</div>
+        </div>
+      </div>
+
+      <!-- Giao dịch gần đây -->
       <div class="section-block">
         <div class="section-heading">
           <span>Giao dịch gần đây</span>
@@ -72,6 +125,12 @@
         </div>
         <div id="recent-list" class="history-list"></div>
         <div id="recent-empty" class="mini-empty hidden">Chưa có giao dịch nào</div>
+      </div>
+
+      <!-- Money Insider -->
+      <div class="section-block">
+        <div class="section-heading"><span>Money Insider</span></div>
+        <div id="insider-card" class="insider-card"></div>
       </div>
     </div>
   </section>
