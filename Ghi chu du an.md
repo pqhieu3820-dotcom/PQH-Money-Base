@@ -54,3 +54,38 @@ màn nhập giao dịch (bàn phím số, chọn danh mục, ghi chú, ngày).
 - [x] Redesign UI giống Money Lover, test qua browser mobile viewport (2026-09-16)
 - [ ] Điền `API_URL` thật sau khi deploy Apps Script
 - [ ] Test cài đặt PWA trên iOS Safari
+
+## Lỗi đã gặp — tránh lặp lại
+- **Push nhầm nhánh:** `git init` không tự biết repo GitHub đã có sẵn nhánh mặc định
+  `main` (do GitHub tạo README khi khởi tạo repo). Lần đầu push code lên nhánh
+  `master` (nhánh local mặc định của git cũ) nên nhìn trên GitHub (mặc định hiển thị
+  `main`) tưởng như chưa push gì. → **Luôn kiểm tra tên nhánh mặc định của repo GitHub
+  trước khi push** (`git ls-remote` hoặc xem trên GitHub), đặt local branch trùng tên
+  rồi mới push, hoặc push xong nhớ kiểm tra lại đúng nhánh hiển thị trên GitHub.
+- **Lỗi GH007 (email privacy):** GitHub chặn push vì commit dùng email cá nhân
+  (Gmail) trong khi tài khoản bật "Keep my email addresses private". → Dùng email
+  dạng `<username>@users.noreply.github.com` cho `git config user.email` khi commit
+  lên repo của tài khoản này.
+- **Service Worker cache cũ:** Sau khi sửa code frontend, mở lại app vẫn thấy bản
+  cũ vì `sw.js` cache-first các file tĩnh. → Khi test local sau mỗi lần sửa
+  HTML/CSS/JS, phải unregister service worker + xoá Cache Storage (hoặc hard reload)
+  trước khi chụp/kiểm tra kết quả.
+
+## Nhật ký chỉnh sửa (theo thời gian thực)
+> Ghi lại từ **13:59 chiều, 16/9/2026** trở đi (các việc làm trước mốc này được
+> tóm tắt lại theo thứ tự, không có giờ chính xác vì lúc đó chưa bắt đầu ghi log).
+
+- **(trước 13:59, 16/9/2026)** — Tạo khung dự án Money Base: `backend/Code.gs`,
+  `frontend/index.html`, `style.css`, `app.js`, `manifest.json`, `sw.js`; khởi tạo
+  git, commit, push lên GitHub (bị nhầm sang nhánh `master`, xem mục Lỗi ở trên).
+  Sau đó redesign giao diện theo layout Money Lover (màn hình chính: số dư, tab
+  tháng, thẻ tổng tiền vào/ra, danh sách giao dịch gom theo ngày; thanh điều hướng
+  dưới có nút + tròn xanh lá mở màn nhập giao dịch). Test qua browser mobile
+  viewport bằng dev server local (`npx serve frontend -l 5173`).
+- **(trước 13:59, 16/9/2026)** — Phát hiện code chưa lên đúng nhánh `main` mặc định
+  trên GitHub. Merge nhánh `master` vào `main` (allow-unrelated-histories), push lại,
+  xoá nhánh `master` thừa trên remote + local. Lưu link Google Sheet (database) và
+  Apps Script project (backend) vào ghi chú.
+- **13:59 chiều, 16/9/2026** — Bổ sung quy trình: từ nay mỗi lần chỉnh sửa dự án sẽ
+  ghi log vào mục "Nhật ký chỉnh sửa" kèm mốc thời gian thực lấy từ hệ thống, và mục
+  "Lỗi đã gặp" sẽ được cập nhật mỗi khi phát hiện sai sót để không lặp lại.
