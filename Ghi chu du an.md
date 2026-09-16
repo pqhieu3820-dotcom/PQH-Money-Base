@@ -82,6 +82,32 @@ chọn danh mục, ghi chú, ngày) dạng slide-up, ẩn thanh nav khi đang nh
    lịch sử đầy đủ trong app thay vì chỉ 50 giao dịch gần nhất.
 3. `guessCategoryStyle_()` trong `app.js` chỉ đoán icon/màu theo từ khoá tiếng Việt
    phổ biến — có thể bổ sung thêm từ khoá khi gặp danh mục lạ hiển thị icon 📦 mặc định.
+4. **Tạo bộ icon iOS/Android còn thiếu** — `manifest.json`/`index.html` trỏ tới
+   `icon-192.png`, `icon-512.png`, `apple-touch-icon.png` nhưng các file này CHƯA
+   tồn tại trong `frontend/`. Nếu cài lên màn hình chính iOS lúc này, Safari sẽ tự
+   chụp screenshot trang làm icon (xấu). Xem skill `multi-platform-app-icons` (mục
+   dưới) để có công thức Python/PIL tạo nhanh.
+5. **Offline detection nên dùng ping thật thay vì chỉ tin `navigator.onLine`** — theo
+   skill `offline-first-web`, `navigator.onLine` báo sai trên Safari iOS (báo "online"
+   dù không có Internet thật). Nên thêm nhánh `?action=ping` trả lời NGAY trong
+   `Code.gs` (trước khi mở Spreadsheet) + client tự ping định kỳ, yêu cầu trượt
+   liên tiếp 2 lần mới kết luận mất mạng.
+
+## Thư viện SOP/Skill cá nhân của người dùng (tham khảo khi cần)
+Người dùng có thư mục skill riêng đúc kết từ dự án HICONIQUE Internal Hub trước đó, tại
+`C:\Users\ADMIN\Desktop\HICONIQUE\SOP SKILL CLAUDE\`. Đã đọc toàn bộ ngày 16/9/2026.
+Các skill liên quan trực tiếp tới Money Base:
+- `gsheets-appscript-web-sync` — kiến trúc Web↔Apps Script↔Sheet tương tự Money Base;
+  gợi ý dùng toàn GET với `?action=`, có nhánh `ping` trả lời sớm, cấm ghi song song.
+- `appscript-editor-browser-automation` — đúc kết y hệt các sự cố gặp phải khi dựng
+  backend thật hôm nay (paste mất ký tự, dropdown chọn hàm sai) + cách né (dùng
+  `monaco.editor.getModels()[0].getValue()` để verify, click nút Lưu thật thay vì
+  Ctrl+S, xác minh đúng deployment ID trước khi deploy).
+- `offline-first-web` — xem mục 5 ở trên.
+- `multi-platform-app-icons` — xem mục 4 ở trên.
+Các skill khác trong thư mục (bulk-sync-html-pages, cascading-hierarchical-dropdown,
+css-flexbox-shrink-pitfall, sortable-id-convention) chưa áp dụng trực tiếp cho Money Base
+nhưng nên xem lại nếu gặp tình huống tương ứng.
 
 ## Lưu ý kỹ thuật
 - Apps Script tự thêm CORS header cho response JSON của doGet/doPost khi deploy "Anyone" — không cần cấu hình thêm.
@@ -241,3 +267,11 @@ chọn danh mục, ghi chú, ngày) dạng slide-up, ẩn thanh nav khi đang nh
     Test lại trên dev server: "Chăm sóc cá nhân", "Bữa tối", "Đàn nhạc", "Thiết bị
     điện tử" đều hiện đúng icon/tên. Ghi chú việc còn lại: đồng bộ toàn bộ 5173 giao
     dịch về local qua `?full=1` và deploy frontend lên host HTTPS để cài PWA iOS.
+- **19:40 tối, 16/9/2026** — Người dùng yêu cầu đọc toàn bộ thư viện skill cá nhân tại
+  `C:\Users\ADMIN\Desktop\HICONIQUE\SOP SKILL CLAUDE\` (đúc kết từ dự án HICONIQUE
+  Internal Hub trước đó), đặc biệt skill `gsheets-appscript-web-sync` vì đã dùng thành
+  công ở dự án khác. Đọc hết 9 skill, đối chiếu với Money Base: xác nhận kiến trúc
+  backend hiện tại đi đúng hướng skill mô tả; phát hiện 2 khoảng trống chưa xử lý (icon
+  iOS/Android còn thiếu file, offline detection chưa dùng ping thật) — xem mục "Việc
+  cần làm tiếp theo" và "Thư viện SOP/Skill cá nhân" ở trên. Theo yêu cầu người dùng,
+  CHỈ ghi nhận lại, CHƯA sửa code — để dành áp dụng khi cần.
