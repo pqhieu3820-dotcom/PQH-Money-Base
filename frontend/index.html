@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no" />
+<title>Money Base</title>
+
+<!-- iOS PWA meta -->
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Money Base" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="theme-color" content="#F7F8FA" />
+<meta name="format-detection" content="telephone=no" />
+<link rel="apple-touch-icon" href="icon-192.png" />
+<link rel="manifest" href="manifest.json" />
+
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<div id="app">
+
+  <!-- Network status bar -->
+  <div id="network-banner" class="network-banner hidden">Đang ngoại tuyến — giao dịch sẽ tự đồng bộ khi có mạng</div>
+
+  <!-- ============ HOME / TRANSACTIONS SCREEN ============ -->
+  <section id="view-home" class="screen active">
+
+    <header class="home-header">
+      <button class="wallet-pill">
+        <span class="wallet-dot"></span>
+        <span>Tiền mặt</span>
+        <span class="chevron">⌄</span>
+      </button>
+      <div class="header-actions">
+        <span id="sync-indicator" class="sync-indicator" title="Trạng thái đồng bộ"></span>
+        <button class="icon-btn" aria-label="Menu">⋮</button>
+      </div>
+    </header>
+
+    <div class="balance-block">
+      <div class="balance-label">Số dư</div>
+      <div id="balance-amount" class="balance-amount">0 ₫</div>
+    </div>
+
+    <div class="period-tabs">
+      <button class="period-tab" data-period="last">Tháng trước</button>
+      <button class="period-tab active" data-period="this">Tháng này</button>
+      <button class="period-tab" data-period="future">Tương lai</button>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-row">
+        <span class="summary-label">Tiền vào</span>
+        <span id="summary-in" class="summary-value in">+0 ₫</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-label">Tiền ra</span>
+        <span id="summary-out" class="summary-value out">-0 ₫</span>
+      </div>
+      <div class="summary-divider"></div>
+      <div class="summary-row summary-total">
+        <span class="summary-label">Chênh lệch</span>
+        <span id="summary-net" class="summary-value">0 ₫</span>
+      </div>
+      <button class="view-report-link">Xem báo cáo kỳ này</button>
+    </div>
+
+    <div id="tx-scroll" class="tx-scroll">
+      <div id="history-list" class="history-list"></div>
+      <div id="history-empty" class="history-empty hidden">Chưa có giao dịch nào</div>
+    </div>
+  </section>
+
+  <!-- ============ ENTRY (ADD TRANSACTION) SCREEN ============ -->
+  <section id="view-entry" class="screen entry-screen">
+
+    <header class="entry-header">
+      <button id="entry-close" class="icon-btn" aria-label="Đóng">✕</button>
+      <div class="header-title">Giao dịch mới</div>
+      <div style="width:32px"></div>
+    </header>
+
+    <div class="entry-scroll">
+      <div class="amount-block">
+        <div class="amount-toggle">
+          <button class="toggle-btn active" data-type="expense">Chi tiền</button>
+          <button class="toggle-btn" data-type="income">Thu nhập</button>
+        </div>
+        <div class="amount-display">
+          <span id="amount-value">0</span>
+          <span class="currency">₫</span>
+        </div>
+      </div>
+
+      <div class="category-section">
+        <div class="section-label">Danh mục</div>
+        <div id="category-grid" class="category-grid"></div>
+      </div>
+
+      <div class="field-row">
+        <label class="field-label" for="note-input">Ghi chú</label>
+        <input id="note-input" class="field-input" type="text" placeholder="Thêm ghi chú..." />
+      </div>
+
+      <div class="field-row">
+        <label class="field-label" for="date-input">Ngày</label>
+        <input id="date-input" class="field-input" type="date" />
+      </div>
+
+      <button id="save-btn" class="save-btn">Lưu giao dịch</button>
+    </div>
+
+    <!-- KEYPAD -->
+    <div id="keypad" class="keypad">
+      <button class="key" data-key="1">1</button>
+      <button class="key" data-key="2">2</button>
+      <button class="key" data-key="3">3</button>
+      <button class="key" data-key="4">4</button>
+      <button class="key" data-key="5">5</button>
+      <button class="key" data-key="6">6</button>
+      <button class="key" data-key="7">7</button>
+      <button class="key" data-key="8">8</button>
+      <button class="key" data-key="9">9</button>
+      <button class="key" data-key="000">000</button>
+      <button class="key" data-key="0">0</button>
+      <button class="key key-del" data-key="del">⌫</button>
+    </div>
+  </section>
+
+  <!-- ============ PLACEHOLDER SCREENS ============ -->
+  <section id="view-budget" class="screen">
+    <header class="entry-header">
+      <div style="width:32px"></div>
+      <div class="header-title">Ngân sách</div>
+      <div style="width:32px"></div>
+    </header>
+    <div class="placeholder-body">
+      <div class="placeholder-icon">📊</div>
+      <p>Tính năng ngân sách sẽ sớm ra mắt.</p>
+    </div>
+  </section>
+
+  <section id="view-account" class="screen">
+    <header class="entry-header">
+      <div style="width:32px"></div>
+      <div class="header-title">Tài khoản</div>
+      <div style="width:32px"></div>
+    </header>
+    <div class="placeholder-body">
+      <div class="account-avatar">🧑</div>
+      <p class="account-email">pqhieu3820@gmail.com</p>
+      <p class="account-note">Dữ liệu được đồng bộ tới Google Sheets qua Apps Script.</p>
+    </div>
+  </section>
+
+  <!-- ============ BOTTOM NAVIGATION ============ -->
+  <nav id="bottom-nav" class="bottom-nav">
+    <button class="nav-btn active" data-tab="home">
+      <span class="nav-icon">🏠</span><span>Trang chủ</span>
+    </button>
+    <button class="nav-btn" data-tab="home">
+      <span class="nav-icon">📄</span><span>Giao dịch</span>
+    </button>
+    <button id="fab-add" class="fab-btn" aria-label="Thêm giao dịch">+</button>
+    <button class="nav-btn" data-tab="budget">
+      <span class="nav-icon">📈</span><span>Ngân sách</span>
+    </button>
+    <button class="nav-btn" data-tab="account">
+      <span class="nav-icon">👤</span><span>Tài khoản</span>
+    </button>
+  </nav>
+
+</div>
+
+<div id="toast" class="toast hidden"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
