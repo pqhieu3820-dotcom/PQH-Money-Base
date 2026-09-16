@@ -10,12 +10,28 @@
 backend/
   Code.gs        # Google Apps Script (doGet/doPost, ghi/đọc Sheet "Chi Tieu")
 frontend/
-  index.html     # Giao diện PWA (mobile-first, kiểu Money Lover)
-  style.css      # Modern Minimalist / Quiet Luxury theme
+  index.html     # Giao diện PWA (mobile-first, layout kiểu Money Lover: màn hình chính + form nhập)
+  style.css      # Theme trắng/xám nhạt, nhấn xanh lá (giống Money Lover)
   app.js         # Logic offline-first, hàng đợi đồng bộ, cache lịch sử
   manifest.json  # Cấu hình PWA
   sw.js          # Service Worker cache-first cho file tĩnh
+.claude/
+  launch.json    # Cấu hình chạy dev server local (npx serve frontend -l 5173)
 ```
+
+## Chạy thử local (để kiểm tra trên máy/điện thoại)
+```bash
+npx serve frontend -l 5173
+```
+Sau đó mở `http://localhost:5173` (hoặc `http://<IP-máy>:5173` từ điện thoại cùng mạng Wi-Fi).
+Lưu ý: mỗi lần đổi code, phải xoá Service Worker cache cũ (DevTools → Application →
+Unregister service worker + Clear storage) hoặc hard-reload, vì `sw.js` cache-first file tĩnh.
+
+## Giao diện
+Đã đổi sang layout giống Money Lover: màn hình chính hiển thị số dư, tab
+Tháng trước/Tháng này/Tương lai, thẻ tổng tiền vào/ra, danh sách giao dịch
+gom theo ngày; thanh điều hướng dưới cùng có nút **+** tròn xanh lá để mở
+màn nhập giao dịch (bàn phím số, chọn danh mục, ghi chú, ngày).
 
 ## Việc cần làm để chạy thật
 1. Mở Google Sheets mới (đăng nhập bằng pqhieu3820@gmail.com) → Extensions → Apps Script.
@@ -32,6 +48,7 @@ frontend/
 
 ## Trạng thái
 - [x] Viết code 6 file theo yêu cầu (2026-09-16)
+- [x] Push code lên GitHub repo trên (2026-09-16)
+- [x] Redesign UI giống Money Lover, test qua browser mobile viewport (2026-09-16)
 - [ ] Điền `API_URL` thật sau khi deploy Apps Script
-- [ ] Push code lên GitHub repo trên
 - [ ] Test cài đặt PWA trên iOS Safari
