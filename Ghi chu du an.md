@@ -3,7 +3,9 @@
 ## Thông tin chung
 - Tên app: **Money Base**
 - Tài khoản Google Sheets/Apps Script dùng để triển khai: **pqhieu3820@gmail.com**
-- GitHub repo: https://github.com/pqhieu3820-dotcom/PQH-Money-Base.git
+- GitHub repo: https://github.com/pqhieu3820-dotcom/PQH-Money-Base.git (nhánh mặc định: `main`)
+- Google Sheet (database): https://docs.google.com/spreadsheets/d/1LsvUbnRB9Cd1UcwigR6g7pTc0TQgfn92xqsRxGhsfJ0/edit?usp=sharing
+- Apps Script project (backend): https://script.google.com/d/1CsZuc5_jiQWGsSTVI0ejRwINY6WEx2T_JN4gCzfg9E5bzIEUjlMCiqHu/edit?usp=sharing
 
 ## Cấu trúc thư mục
 ```
@@ -34,10 +36,10 @@ gom theo ngày; thanh điều hướng dưới cùng có nút **+** tròn xanh l
 màn nhập giao dịch (bàn phím số, chọn danh mục, ghi chú, ngày).
 
 ## Việc cần làm để chạy thật
-1. Mở Google Sheets mới (đăng nhập bằng pqhieu3820@gmail.com) → Extensions → Apps Script.
-2. Dán nội dung `backend/Code.gs` vào, Deploy → New deployment → Type: Web app → Execute as: Me → Who has access: Anyone.
+1. Mở Apps Script project ở link trên (đăng nhập pqhieu3820@gmail.com), dán/cập nhật nội dung `backend/Code.gs`.
+2. Deploy → New deployment → Type: Web app → Execute as: Me → Who has access: Anyone.
 3. Copy URL deployment (`.../exec`) → dán vào hằng số `API_URL` ở đầu file `frontend/app.js`.
-4. Sheet sẽ tự tạo tab "Chi Tieu" với cột: ID | Ngày | Số tiền | Danh mục | Ghi chú.
+4. Sheet (link ở trên) sẽ tự tạo tab "Chi Tieu" với cột: ID | Ngày | Số tiền | Danh mục | Ghi chú.
 5. Deploy phần `frontend/` lên GitHub Pages (hoặc bất kỳ static host nào có HTTPS) để cài PWA trên iOS (Add to Home Screen).
 
 ## Lưu ý kỹ thuật
