@@ -30,10 +30,19 @@ Lưu ý: mỗi lần đổi code, phải xoá Service Worker cache cũ (DevTools
 Unregister service worker + Clear storage) hoặc hard-reload, vì `sw.js` cache-first file tĩnh.
 
 ## Giao diện
-Đã đổi sang layout giống Money Lover: màn hình chính hiển thị số dư, tab
-Tháng trước/Tháng này/Tương lai, thẻ tổng tiền vào/ra, danh sách giao dịch
-gom theo ngày; thanh điều hướng dưới cùng có nút **+** tròn xanh lá để mở
-màn nhập giao dịch (bàn phím số, chọn danh mục, ghi chú, ngày).
+Layout giống Money Lover, tách thành 4 màn hình riêng theo 4 tab điều hướng dưới:
+1. **Trang chủ** — dashboard: số dư tổng, tổng tiền vào/ra tháng này, top danh mục
+   chi tiêu nhiều nhất (thanh tiến độ), 5 giao dịch gần đây + nút "Xem tất cả".
+2. **Giao dịch** — danh sách đầy đủ, có tab Tháng trước/Tháng này/Tương lai, thẻ
+   tổng tiền vào/ra/chênh lệch, danh sách gom theo ngày.
+3. **Ngân sách** — đặt hạn mức chi tiêu theo từng danh mục (lưu trong `localStorage`
+   key `moneybase_budgets`), thanh tiến độ đổi màu đỏ khi vượt hạn mức, tổng hạn mức
+   + tổng đã chi ở đầu trang.
+4. **Tài khoản** — thông tin ví/email, trạng thái mạng + số giao dịch chờ đồng bộ +
+   nút "Đồng bộ ngay", link nhanh tới Google Sheet và GitHub repo, thông tin phiên bản app.
+
+Nút **+** tròn xanh lá ở giữa thanh điều hướng mở màn nhập giao dịch (bàn phím số,
+chọn danh mục, ghi chú, ngày) dạng slide-up, ẩn thanh nav khi đang nhập.
 
 ## Việc cần làm để chạy thật
 1. Mở Apps Script project ở link trên (đăng nhập pqhieu3820@gmail.com), dán/cập nhật nội dung `backend/Code.gs`.
@@ -45,13 +54,14 @@ màn nhập giao dịch (bàn phím số, chọn danh mục, ghi chú, ngày).
 ## Lưu ý kỹ thuật
 - Apps Script tự thêm CORS header cho response JSON của doGet/doPost khi deploy "Anyone" — không cần cấu hình thêm.
 - `sw.js` bỏ qua cache cho mọi request tới `script.google.com` để dữ liệu API luôn tươi khi online.
-- Offline queue lưu trong `localStorage` key `moneybase_offline_queue`; cache lịch sử lưu ở key `moneybase_history_cache`.
+- Offline queue lưu trong `localStorage` key `moneybase_offline_queue`; cache lịch sử lưu ở key `moneybase_history_cache`; hạn mức ngân sách lưu ở key `moneybase_budgets`.
 - Khi có sự kiện `online`, app tự động POST toàn bộ hàng đợi lên Apps Script rồi xoá queue.
 
 ## Trạng thái
 - [x] Viết code 6 file theo yêu cầu (2026-09-16)
 - [x] Push code lên GitHub repo trên (2026-09-16)
 - [x] Redesign UI giống Money Lover, test qua browser mobile viewport (2026-09-16)
+- [x] Tách 4 tab (Trang chủ/Giao dịch/Ngân sách/Tài khoản) thành 4 màn hình riêng đầy đủ chức năng (2026-09-16)
 - [ ] Điền `API_URL` thật sau khi deploy Apps Script
 - [ ] Test cài đặt PWA trên iOS Safari
 
@@ -89,3 +99,9 @@ màn nhập giao dịch (bàn phím số, chọn danh mục, ghi chú, ngày).
 - **13:59 chiều, 16/9/2026** — Bổ sung quy trình: từ nay mỗi lần chỉnh sửa dự án sẽ
   ghi log vào mục "Nhật ký chỉnh sửa" kèm mốc thời gian thực lấy từ hệ thống, và mục
   "Lỗi đã gặp" sẽ được cập nhật mỗi khi phát hiện sai sót để không lặp lại.
+- **14:06 chiều, 16/9/2026** — Tách 4 tab điều hướng thành 4 màn hình riêng biệt với
+  nội dung đầy đủ: Trang chủ (dashboard tổng quan + top danh mục + giao dịch gần đây),
+  Giao dịch (danh sách đầy đủ có tab tháng, tách khỏi Trang chủ), Ngân sách (đặt hạn
+  mức theo danh mục, thanh tiến độ, lưu `localStorage`), Tài khoản (trạng thái đồng bộ,
+  nút đồng bộ thủ công, link Google Sheet/GitHub, thông tin app). Test cả 4 màn qua
+  browser mobile viewport, xác nhận điều hướng và dữ liệu hiển thị đúng.

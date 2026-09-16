@@ -24,7 +24,7 @@
   <!-- Network status bar -->
   <div id="network-banner" class="network-banner hidden">Đang ngoại tuyến — giao dịch sẽ tự đồng bộ khi có mạng</div>
 
-  <!-- ============ HOME / TRANSACTIONS SCREEN ============ -->
+  <!-- ============ 1. TRANG CHỦ (DASHBOARD) ============ -->
   <section id="view-home" class="screen active">
 
     <header class="home-header">
@@ -39,10 +39,51 @@
       </div>
     </header>
 
-    <div class="balance-block">
-      <div class="balance-label">Số dư</div>
-      <div id="balance-amount" class="balance-amount">0 ₫</div>
+    <div class="home-scroll">
+      <div class="balance-block">
+        <div class="balance-label">Số dư</div>
+        <div id="home-balance-amount" class="balance-amount">0 ₫</div>
+      </div>
+
+      <div class="summary-card">
+        <div class="summary-row">
+          <span class="summary-label">Tiền vào tháng này</span>
+          <span id="home-summary-in" class="summary-value in">+0 ₫</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Tiền ra tháng này</span>
+          <span id="home-summary-out" class="summary-value out">-0 ₫</span>
+        </div>
+      </div>
+
+      <div class="section-block">
+        <div class="section-heading">
+          <span>Chi tiêu theo danh mục</span>
+          <span class="section-sub">Tháng này</span>
+        </div>
+        <div id="top-categories" class="top-categories"></div>
+        <div id="top-categories-empty" class="mini-empty hidden">Chưa có chi tiêu tháng này</div>
+      </div>
+
+      <div class="section-block">
+        <div class="section-heading">
+          <span>Giao dịch gần đây</span>
+          <button id="see-all-tx" class="section-action">Xem tất cả</button>
+        </div>
+        <div id="recent-list" class="history-list"></div>
+        <div id="recent-empty" class="mini-empty hidden">Chưa có giao dịch nào</div>
+      </div>
     </div>
+  </section>
+
+  <!-- ============ 2. GIAO DỊCH (FULL LIST) ============ -->
+  <section id="view-transactions" class="screen">
+
+    <header class="entry-header">
+      <div style="width:32px"></div>
+      <div class="header-title">Giao dịch</div>
+      <div style="width:32px"></div>
+    </header>
 
     <div class="period-tabs">
       <button class="period-tab" data-period="last">Tháng trước</button>
@@ -53,18 +94,17 @@
     <div class="summary-card">
       <div class="summary-row">
         <span class="summary-label">Tiền vào</span>
-        <span id="summary-in" class="summary-value in">+0 ₫</span>
+        <span id="tx-summary-in" class="summary-value in">+0 ₫</span>
       </div>
       <div class="summary-row">
         <span class="summary-label">Tiền ra</span>
-        <span id="summary-out" class="summary-value out">-0 ₫</span>
+        <span id="tx-summary-out" class="summary-value out">-0 ₫</span>
       </div>
       <div class="summary-divider"></div>
       <div class="summary-row summary-total">
         <span class="summary-label">Chênh lệch</span>
-        <span id="summary-net" class="summary-value">0 ₫</span>
+        <span id="tx-summary-net" class="summary-value">0 ₫</span>
       </div>
-      <button class="view-report-link">Xem báo cáo kỳ này</button>
     </div>
 
     <div id="tx-scroll" class="tx-scroll">
@@ -129,29 +169,72 @@
     </div>
   </section>
 
-  <!-- ============ PLACEHOLDER SCREENS ============ -->
+  <!-- ============ 3. NGÂN SÁCH ============ -->
   <section id="view-budget" class="screen">
     <header class="entry-header">
       <div style="width:32px"></div>
-      <div class="header-title">Ngân sách</div>
+      <div class="header-title">Ngân sách tháng này</div>
       <div style="width:32px"></div>
     </header>
-    <div class="placeholder-body">
-      <div class="placeholder-icon">📊</div>
-      <p>Tính năng ngân sách sẽ sớm ra mắt.</p>
+    <div class="budget-scroll">
+      <div class="summary-card budget-total-card">
+        <div class="summary-row">
+          <span class="summary-label">Tổng hạn mức</span>
+          <span id="budget-total-limit" class="summary-value">0 ₫</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Đã chi</span>
+          <span id="budget-total-spent" class="summary-value out">0 ₫</span>
+        </div>
+      </div>
+      <div id="budget-list" class="budget-list"></div>
     </div>
   </section>
 
+  <!-- ============ 4. TÀI KHOẢN ============ -->
   <section id="view-account" class="screen">
     <header class="entry-header">
       <div style="width:32px"></div>
       <div class="header-title">Tài khoản</div>
       <div style="width:32px"></div>
     </header>
-    <div class="placeholder-body">
-      <div class="account-avatar">🧑</div>
-      <p class="account-email">pqhieu3820@gmail.com</p>
-      <p class="account-note">Dữ liệu được đồng bộ tới Google Sheets qua Apps Script.</p>
+    <div class="account-scroll">
+      <div class="account-profile">
+        <div class="account-avatar">🧑</div>
+        <div class="account-email">pqhieu3820@gmail.com</div>
+        <div class="account-wallet">Ví: Tiền mặt</div>
+      </div>
+
+      <div class="section-block">
+        <div class="section-heading"><span>Trạng thái đồng bộ</span></div>
+        <div class="account-card">
+          <div class="account-row">
+            <span>Kết nối mạng</span>
+            <span id="acc-network-status" class="status-pill">Online</span>
+          </div>
+          <div class="account-row">
+            <span>Giao dịch chờ đồng bộ</span>
+            <span id="acc-pending-count">0</span>
+          </div>
+          <button id="acc-sync-now" class="secondary-btn">Đồng bộ ngay</button>
+        </div>
+      </div>
+
+      <div class="section-block">
+        <div class="section-heading"><span>Liên kết dữ liệu</span></div>
+        <div class="account-card">
+          <a class="account-link" href="https://docs.google.com/spreadsheets/d/1LsvUbnRB9Cd1UcwigR6g7pTc0TQgfn92xqsRxGhsfJ0/edit?usp=sharing" target="_blank" rel="noopener">📊 Google Sheet (database)</a>
+          <a class="account-link" href="https://github.com/pqhieu3820-dotcom/PQH-Money-Base" target="_blank" rel="noopener">🐙 GitHub repository</a>
+        </div>
+      </div>
+
+      <div class="section-block">
+        <div class="section-heading"><span>Ứng dụng</span></div>
+        <div class="account-card">
+          <div class="account-row"><span>Phiên bản</span><span>1.0.0</span></div>
+          <div class="account-row"><span>Chế độ</span><span>Offline-first PWA</span></div>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -160,7 +243,7 @@
     <button class="nav-btn active" data-tab="home">
       <span class="nav-icon">🏠</span><span>Trang chủ</span>
     </button>
-    <button class="nav-btn" data-tab="home">
+    <button class="nav-btn" data-tab="transactions">
       <span class="nav-icon">📄</span><span>Giao dịch</span>
     </button>
     <button id="fab-add" class="fab-btn" aria-label="Thêm giao dịch">+</button>

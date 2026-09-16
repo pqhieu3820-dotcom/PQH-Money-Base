@@ -5,6 +5,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycb.../exec';
 
 const LS_QUEUE_KEY = 'moneybase_offline_queue';
 const LS_HISTORY_KEY = 'moneybase_history_cache';
+const LS_BUDGET_KEY = 'moneybase_budgets';
 
 const CATEGORIES = [
   { id: 'food', label: 'Ăn uống', icon: '🍜' },
@@ -37,17 +38,38 @@ const saveBtnEl = document.getElementById('save-btn');
 const keypadEl = document.getElementById('keypad');
 const networkBannerEl = document.getElementById('network-banner');
 const syncIndicatorEl = document.getElementById('sync-indicator');
+const toastEl = document.getElementById('toast');
+const bottomNavEl = document.getElementById('bottom-nav');
+
+// Home dashboard
+const homeBalanceEl = document.getElementById('home-balance-amount');
+const homeSummaryInEl = document.getElementById('home-summary-in');
+const homeSummaryOutEl = document.getElementById('home-summary-out');
+const topCategoriesEl = document.getElementById('top-categories');
+const topCategoriesEmptyEl = document.getElementById('top-categories-empty');
+const recentListEl = document.getElementById('recent-list');
+const recentEmptyEl = document.getElementById('recent-empty');
+
+// Transactions screen
 const historyListEl = document.getElementById('history-list');
 const historyEmptyEl = document.getElementById('history-empty');
-const toastEl = document.getElementById('toast');
-const balanceAmountEl = document.getElementById('balance-amount');
-const summaryInEl = document.getElementById('summary-in');
-const summaryOutEl = document.getElementById('summary-out');
-const summaryNetEl = document.getElementById('summary-net');
-const bottomNavEl = document.getElementById('bottom-nav');
+const txSummaryInEl = document.getElementById('tx-summary-in');
+const txSummaryOutEl = document.getElementById('tx-summary-out');
+const txSummaryNetEl = document.getElementById('tx-summary-net');
+
+// Budget screen
+const budgetListEl = document.getElementById('budget-list');
+const budgetTotalLimitEl = document.getElementById('budget-total-limit');
+const budgetTotalSpentEl = document.getElementById('budget-total-spent');
+
+// Account screen
+const accNetworkStatusEl = document.getElementById('acc-network-status');
+const accPendingCountEl = document.getElementById('acc-pending-count');
+const accSyncNowBtn = document.getElementById('acc-sync-now');
 
 const screens = {
   home: document.getElementById('view-home'),
+  transactions: document.getElementById('view-transactions'),
   entry: document.getElementById('view-entry'),
   budget: document.getElementById('view-budget'),
   account: document.getElementById('view-account')
@@ -85,12 +107,17 @@ function bindEvents() {
   });
   document.getElementById('entry-close').addEventListener('click', function () {
     showScreen('home');
+    setActiveNav('home');
+  });
+
+  document.getElementById('see-all-tx').addEventListener('click', function () {
+    showScreen('transactions');
+    setActiveNav('transactions');
   });
 
   bottomNavEl.querySelectorAll('.nav-btn').forEach(function (btn) {
     btn.addEventListener('click', function () {
-      bottomNavEl.querySelectorAll('.nav-btn').forEach(function (b) { b.classList.remove('active'); });
-      btn.classList.add('active');
+      setActiveNav(btn.dataset.tab);
       showScreen(btn.dataset.tab);
     });
   });
@@ -100,12 +127,26 @@ function bindEvents() {
       document.querySelectorAll('.period-tab').forEach(function (b) { b.classList.remove('active'); });
       btn.classList.add('active');
       state.period = btn.dataset.period;
-      renderHistory();
+      renderTransactionsScreen();
     });
+  });
+
+  accSyncNowBtn.addEventListener('click', function () {
+    if (!navigator.onLine) {
+      showToast('Đang ngoại tuyến, không thể đồng bộ');
+      return;
+    }
+    syncOfflineQueue();
   });
 
   window.addEventListener('online', handleOnline);
   window.addEventListener('offline', handleOffline);
+}
+
+function setActiveNav(tab) {
+  bottomNavEl.querySelectorAll('.nav-btn').forEach(function (b) {
+    b.classList.toggle('active', b.dataset.tab === tab);
+  });
 }
 
 function showScreen(name) {
@@ -113,6 +154,11 @@ function showScreen(name) {
     screens[key].classList.toggle('active', key === name);
   });
   bottomNavEl.classList.toggle('hidden', name === 'entry');
+
+  if (name === 'home') renderHomeDashboard();
+  if (name === 'transactions') renderTransactionsScreen();
+  if (name === 'budget') renderBudgetScreen();
+  if (name === 'account') renderAccountScreen();
 }
 
 // ---------- Categories ----------
@@ -171,14 +217,14 @@ function saveTransaction() {
 
   prependToHistoryCache(tx, true);
   resetEntryForm();
-  renderHistory();
   showScreen('home');
+  setActiveNav('home');
 
   if (navigator.onLine) {
     sendTransactions([tx])
       .then(function () {
         markSynced(tx.id);
-        renderHistory();
+        refreshCurrentScreen();
         showToast('Đã lưu giao dịch');
       })
       .catch(function () {
@@ -224,14 +270,19 @@ function loadHistory() {
         if (result && result.success) {
           localStorage.setItem(LS_HISTORY_KEY, JSON.stringify(result.data));
         }
-        renderHistory();
+        renderHomeDashboard();
       })
       .catch(function () {
-        renderHistory();
+        renderHomeDashboard();
       });
   } else {
-    renderHistory();
+    renderHomeDashboard();
   }
+}
+
+function refreshCurrentScreen() {
+  const activeKey = Object.keys(screens).find(function (key) { return screens[key].classList.contains('active'); });
+  if (activeKey) showScreen(activeKey);
 }
 
 // ---------- Offline queue ----------
@@ -256,7 +307,10 @@ function queueOffline(tx) {
 
 function syncOfflineQueue() {
   const queue = getQueue();
-  if (queue.length === 0) return;
+  if (queue.length === 0) {
+    showToast('Không có giao dịch nào cần đồng bộ');
+    return;
+  }
 
   syncIndicatorEl.className = 'sync-indicator pending';
   sendTransactions(queue)
@@ -264,12 +318,13 @@ function syncOfflineQueue() {
       queue.forEach(function (tx) { markSynced(tx.id); });
       saveQueue([]);
       updateNetworkUI();
-      renderHistory();
+      refreshCurrentScreen();
       loadHistory();
       showToast('Đã đồng bộ ' + queue.length + ' giao dịch');
     })
     .catch(function () {
       updateNetworkUI();
+      showToast('Đồng bộ thất bại, thử lại sau');
     });
 }
 
@@ -321,21 +376,8 @@ function isInPeriod(date, period) {
   return true;
 }
 
-function renderSummary(items) {
-  let inflow = 0;
-  let outflow = 0;
-  items.forEach(function (item) {
-    if (item.amount >= 0) inflow += item.amount;
-    else outflow += Math.abs(item.amount);
-  });
-  const net = inflow - outflow;
-
-  summaryInEl.textContent = '+' + formatNumber(String(inflow)) + ' ₫';
-  summaryOutEl.textContent = '-' + formatNumber(String(outflow)) + ' ₫';
-  summaryNetEl.textContent = (net >= 0 ? '+' : '') + formatNumber(String(net)) + ' ₫';
-
-  const allBalance = getHistoryCache().reduce(function (sum, item) { return sum + item.amount; }, 0);
-  balanceAmountEl.textContent = formatNumber(String(allBalance)) + ' ₫';
+function isThisMonth(date) {
+  return isInPeriod(date, 'this');
 }
 
 function groupByDay(items) {
@@ -353,11 +395,101 @@ function groupByDay(items) {
   return groups;
 }
 
-function renderHistory() {
+function renderTxRow(item) {
+  const cat = getCategory(item.category);
+  const row = document.createElement('div');
+  row.className = 'history-item' + (item.pending ? ' pending-sync' : '');
+
+  const isPositive = item.amount >= 0;
+  const amountStr = (isPositive ? '+' : '') + formatNumber(String(item.amount)) + ' ₫';
+
+  row.innerHTML =
+    '<div class="cat-icon">' + cat.icon + '</div>' +
+    '<div class="item-main">' +
+      '<div class="item-title">' + cat.label + '</div>' +
+      (item.note ? '<div class="item-note">' + item.note + '</div>' : '') +
+      (item.pending ? '<span class="pending-badge">Chờ đồng bộ</span>' : '') +
+    '</div>' +
+    '<div class="item-amount' + (isPositive ? ' positive' : '') + '">' + amountStr + '</div>';
+
+  return row;
+}
+
+// ---------- 1. Home dashboard ----------
+function renderHomeDashboard() {
+  const cache = getHistoryCache();
+  const allBalance = cache.reduce(function (sum, item) { return sum + item.amount; }, 0);
+  homeBalanceEl.textContent = formatNumber(String(allBalance)) + ' ₫';
+
+  const monthItems = cache.filter(function (item) { return isThisMonth(item.date); });
+  let inflow = 0;
+  let outflow = 0;
+  const spendByCategory = {};
+  monthItems.forEach(function (item) {
+    if (item.amount >= 0) {
+      inflow += item.amount;
+    } else {
+      outflow += Math.abs(item.amount);
+      spendByCategory[item.category] = (spendByCategory[item.category] || 0) + Math.abs(item.amount);
+    }
+  });
+  homeSummaryInEl.textContent = '+' + formatNumber(String(inflow)) + ' ₫';
+  homeSummaryOutEl.textContent = '-' + formatNumber(String(outflow)) + ' ₫';
+
+  const topCats = Object.keys(spendByCategory)
+    .map(function (id) { return { id: id, amount: spendByCategory[id] }; })
+    .sort(function (a, b) { return b.amount - a.amount; })
+    .slice(0, 5);
+
+  topCategoriesEl.innerHTML = '';
+  if (topCats.length === 0) {
+    topCategoriesEmptyEl.classList.remove('hidden');
+  } else {
+    topCategoriesEmptyEl.classList.add('hidden');
+    const maxAmount = topCats[0].amount;
+    topCats.forEach(function (entry) {
+      const cat = getCategory(entry.id);
+      const pct = maxAmount > 0 ? Math.round((entry.amount / maxAmount) * 100) : 0;
+      const row = document.createElement('div');
+      row.className = 'top-cat-row';
+      row.innerHTML =
+        '<div class="cat-icon">' + cat.icon + '</div>' +
+        '<div class="top-cat-main">' +
+          '<div class="top-cat-label">' + cat.label + '</div>' +
+          '<div class="top-cat-bar-track"><div class="top-cat-bar-fill" style="width:' + pct + '%"></div></div>' +
+        '</div>' +
+        '<div class="top-cat-amount">' + formatNumber(String(entry.amount)) + ' ₫</div>';
+      topCategoriesEl.appendChild(row);
+    });
+  }
+
+  recentListEl.innerHTML = '';
+  const recent = cache.slice(0, 5);
+  if (recent.length === 0) {
+    recentEmptyEl.classList.remove('hidden');
+  } else {
+    recentEmptyEl.classList.add('hidden');
+    recent.forEach(function (item) {
+      recentListEl.appendChild(renderTxRow(item));
+    });
+  }
+}
+
+// ---------- 2. Transactions screen ----------
+function renderTransactionsScreen() {
   const cache = getHistoryCache();
   const filtered = cache.filter(function (item) { return isInPeriod(item.date, state.period); });
 
-  renderSummary(filtered);
+  let inflow = 0;
+  let outflow = 0;
+  filtered.forEach(function (item) {
+    if (item.amount >= 0) inflow += item.amount;
+    else outflow += Math.abs(item.amount);
+  });
+  const net = inflow - outflow;
+  txSummaryInEl.textContent = '+' + formatNumber(String(inflow)) + ' ₫';
+  txSummaryOutEl.textContent = '-' + formatNumber(String(outflow)) + ' ₫';
+  txSummaryNetEl.textContent = (net >= 0 ? '+' : '') + formatNumber(String(net)) + ' ₫';
 
   historyListEl.innerHTML = '';
 
@@ -368,7 +500,6 @@ function renderHistory() {
   historyEmptyEl.classList.add('hidden');
 
   const groups = groupByDay(filtered);
-
   groups.forEach(function (group) {
     const groupEl = document.createElement('div');
     groupEl.className = 'tx-day-group';
@@ -384,27 +515,90 @@ function renderHistory() {
     groupEl.appendChild(header);
 
     group.items.forEach(function (item) {
-      const cat = getCategory(item.category);
-      const row = document.createElement('div');
-      row.className = 'history-item' + (item.pending ? ' pending-sync' : '');
-
-      const isPositive = item.amount >= 0;
-      const amountStr = (isPositive ? '+' : '') + formatNumber(String(item.amount)) + ' ₫';
-
-      row.innerHTML =
-        '<div class="cat-icon">' + cat.icon + '</div>' +
-        '<div class="item-main">' +
-          '<div class="item-title">' + cat.label + '</div>' +
-          (item.note ? '<div class="item-note">' + item.note + '</div>' : '') +
-          (item.pending ? '<span class="pending-badge">Chờ đồng bộ</span>' : '') +
-        '</div>' +
-        '<div class="item-amount' + (isPositive ? ' positive' : '') + '">' + amountStr + '</div>';
-
-      groupEl.appendChild(row);
+      groupEl.appendChild(renderTxRow(item));
     });
 
     historyListEl.appendChild(groupEl);
   });
+}
+
+// ---------- 3. Budget screen ----------
+function getBudgets() {
+  try {
+    return JSON.parse(localStorage.getItem(LS_BUDGET_KEY)) || {};
+  } catch (e) {
+    return {};
+  }
+}
+
+function saveBudgets(budgets) {
+  localStorage.setItem(LS_BUDGET_KEY, JSON.stringify(budgets));
+}
+
+function renderBudgetScreen() {
+  const budgets = getBudgets();
+  const cache = getHistoryCache();
+  const monthItems = cache.filter(function (item) { return isThisMonth(item.date) && item.amount < 0; });
+
+  const spendByCategory = {};
+  monthItems.forEach(function (item) {
+    spendByCategory[item.category] = (spendByCategory[item.category] || 0) + Math.abs(item.amount);
+  });
+
+  let totalLimit = 0;
+  let totalSpent = 0;
+
+  budgetListEl.innerHTML = '';
+  CATEGORIES.filter(function (c) { return c.id !== 'salary'; }).forEach(function (cat) {
+    const limit = Number(budgets[cat.id]) || 0;
+    const spent = spendByCategory[cat.id] || 0;
+    totalLimit += limit;
+    totalSpent += spent;
+
+    const pct = limit > 0 ? Math.min(100, Math.round((spent / limit) * 100)) : 0;
+    const overBudget = limit > 0 && spent > limit;
+
+    const row = document.createElement('div');
+    row.className = 'budget-item';
+    row.innerHTML =
+      '<div class="budget-item-top">' +
+        '<div class="cat-icon">' + cat.icon + '</div>' +
+        '<div class="budget-item-name">' + cat.label + '</div>' +
+        '<input type="number" min="0" step="10000" class="budget-input" data-cat="' + cat.id + '" placeholder="Đặt hạn mức" value="' + (limit || '') + '" />' +
+      '</div>' +
+      '<div class="top-cat-bar-track"><div class="top-cat-bar-fill' + (overBudget ? ' over' : '') + '" style="width:' + pct + '%"></div></div>' +
+      '<div class="budget-item-meta">' +
+        '<span>Đã chi: ' + formatNumber(String(spent)) + ' ₫</span>' +
+        (limit > 0 ? '<span' + (overBudget ? ' class="over-text"' : '') + '>' + pct + '%</span>' : '<span>Chưa đặt hạn mức</span>') +
+      '</div>';
+
+    budgetListEl.appendChild(row);
+  });
+
+  budgetTotalLimitEl.textContent = formatNumber(String(totalLimit)) + ' ₫';
+  budgetTotalSpentEl.textContent = formatNumber(String(totalSpent)) + ' ₫';
+
+  budgetListEl.querySelectorAll('.budget-input').forEach(function (input) {
+    input.addEventListener('change', function () {
+      const budgets2 = getBudgets();
+      const val = Number(input.value) || 0;
+      if (val > 0) {
+        budgets2[input.dataset.cat] = val;
+      } else {
+        delete budgets2[input.dataset.cat];
+      }
+      saveBudgets(budgets2);
+      renderBudgetScreen();
+    });
+  });
+}
+
+// ---------- 4. Account screen ----------
+function renderAccountScreen() {
+  const queue = getQueue();
+  accPendingCountEl.textContent = String(queue.length);
+  accNetworkStatusEl.textContent = navigator.onLine ? 'Online' : 'Offline';
+  accNetworkStatusEl.className = 'status-pill' + (navigator.onLine ? '' : ' offline');
 }
 
 // ---------- Network UI ----------
@@ -429,6 +623,7 @@ function updateNetworkUI() {
     networkBannerEl.classList.add('hidden');
     syncIndicatorEl.className = 'sync-indicator' + (queue.length > 0 ? ' pending' : '');
   }
+  if (screens.account.classList.contains('active')) renderAccountScreen();
 }
 
 // ---------- Toast ----------
