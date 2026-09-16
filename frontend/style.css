@@ -328,12 +328,19 @@ html, body {
 .insider-row .value { font-weight: 700; color: var(--red); }
 .insider-avg-row {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
   margin-bottom: 14px;
 }
-.insider-avg-label { font-size: 11px; color: var(--muted); }
-.insider-avg-value { font-size: 15px; font-weight: 700; color: var(--navy); }
+.insider-avg-title { font-size: 12px; font-weight: 700; color: var(--navy); margin-bottom: 4px; }
+.insider-avg-label { font-size: 11px; color: var(--muted); margin-bottom: 2px; }
+.insider-avg-value { font-size: 16px; font-weight: 700; color: var(--navy); }
+.insider-avg-right {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
 .insider-badge {
   width: 46px;
   height: 46px;
@@ -347,7 +354,7 @@ html, body {
   color: var(--charcoal);
   text-align: center;
 }
-.insider-badge-label { font-size: 10px; color: var(--muted); text-align: right; max-width: 90px; }
+.insider-badge-label { font-size: 10px; color: var(--muted); text-align: center; max-width: 100px; }
 .insider-outline-btn, .insider-solid-btn {
   width: 100%;
   padding: 11px;
@@ -499,6 +506,21 @@ html, body {
   color: #E0A93E;
   display: block;
 }
+
+/* Continuous single-card list (Money Lover style: one card, divider rows) */
+.list-card {
+  background: var(--surface);
+  border-radius: var(--radius-md);
+  padding: 4px 14px;
+}
+.list-card .history-item {
+  background: transparent;
+  border-radius: 0;
+  margin-bottom: 0;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.list-card .history-item:last-child { border-bottom: none; }
 
 .history-empty {
   text-align: center;

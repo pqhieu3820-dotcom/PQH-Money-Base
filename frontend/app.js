@@ -65,6 +65,7 @@ const topCategoriesEl = document.getElementById('top-categories');
 const topCategoriesEmptyEl = document.getElementById('top-categories-empty');
 const recentListEl = document.getElementById('recent-list');
 const recentEmptyEl = document.getElementById('recent-empty');
+const recentCardEl = document.getElementById('recent-card');
 const insiderCardEl = document.getElementById('insider-card');
 
 // Transactions screen
@@ -623,8 +624,10 @@ function renderHomeDashboard() {
   const recent = cache.slice(0, 5);
   if (recent.length === 0) {
     recentEmptyEl.classList.remove('hidden');
+    recentCardEl.classList.add('hidden');
   } else {
     recentEmptyEl.classList.add('hidden');
+    recentCardEl.classList.remove('hidden');
     recent.forEach(function (item) {
       recentListEl.appendChild(renderRecentRow(item));
     });
@@ -659,10 +662,11 @@ function renderInsiderCard(cache, topCats) {
     '<div class="insider-row"><span class="label">Tổng đã chi</span><span class="value">' + formatNumber(String(top.amount)) + ' ₫</span></div>' +
     '<div class="insider-avg-row">' +
       '<div>' +
-        '<div class="insider-avg-label">Tháng này · Trung bình</div>' +
+        '<div class="insider-avg-title">Tháng này</div>' +
+        '<div class="insider-avg-label">Trung bình</div>' +
         '<div class="insider-avg-value">' + formatNumber(String(avgPerDay)) + ' đ/ngày</div>' +
       '</div>' +
-      '<div style="display:flex;align-items:center;gap:8px;">' +
+      '<div class="insider-avg-right">' +
         '<div class="insider-badge">' + pct + '%</div>' +
         '<div class="insider-badge-label">' + (higher ? 'Cao hơn' : 'Thấp hơn') + ' tháng trước</div>' +
       '</div>' +

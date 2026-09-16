@@ -130,3 +130,11 @@ chọn danh mục, ghi chú, ngày) dạng slide-up, ẩn thanh nav khi đang nh
   khớp ảnh. Đổi thanh nav thành dạng pill nổi bo góc lớn (border-radius 26px, margin
   2 bên + đáy, box-shadow), tab active có nền pill xám nhạt bao quanh icon+nhãn. Test
   qua browser mobile viewport, xác nhận chuyển tab đổi đúng trạng thái active.
+- **14:58 chiều, 16/9/2026** — Người dùng phản hồi Trang chủ vẫn chưa giống ảnh mẫu
+  lắm, yêu cầu bổ sung/cải thiện. Sửa "Giao dịch gần đây" từ nhiều ô trắng rời rạc
+  thành 1 card liền mạch có đường kẻ phân cách giữa các dòng (đúng kiểu Money Lover,
+  class `.list-card`). Sửa lại bố cục Money Insider thành 3 dòng ("Tháng này" /
+  "Trung bình" / giá trị) với badge tròn % + nhãn xếp dọc bên phải thay vì nằm ngang.
+  Test bằng cách tạm seed 8 giao dịch mẫu qua console để kiểm tra layout với dữ liệu
+  phong phú (nhiều danh mục, biểu đồ có 2 cột rõ rệt) — xác nhận khớp ảnh mẫu, sau đó
+  xoá dữ liệu test khỏi localStorage trước khi push.
