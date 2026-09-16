@@ -14,14 +14,18 @@ const CATEGORIES = [
   { id: 'health', label: 'Sức khỏe', icon: '💊' },
   { id: 'education', label: 'Giáo dục', icon: '📚' },
   { id: 'entertainment', label: 'Giải trí', icon: '🎬' },
+  { id: 'salary', label: 'Lương', icon: '💰' },
   { id: 'other', label: 'Khác', icon: '📦' }
 ];
+
+const WEEKDAYS = ['Chủ nhật', 'Thứ hai', 'Thứ ba', 'Thứ tư', 'Thứ năm', 'Thứ sáu', 'Thứ bảy'];
 
 const state = {
   amount: '0',
   type: 'expense',
   category: CATEGORIES[0].id,
-  isOnline: navigator.onLine
+  isOnline: navigator.onLine,
+  period: 'this'
 };
 
 // ---------- DOM ----------
@@ -36,8 +40,18 @@ const syncIndicatorEl = document.getElementById('sync-indicator');
 const historyListEl = document.getElementById('history-list');
 const historyEmptyEl = document.getElementById('history-empty');
 const toastEl = document.getElementById('toast');
-const viewEntry = document.getElementById('view-entry');
-const viewHistory = document.getElementById('view-history');
+const balanceAmountEl = document.getElementById('balance-amount');
+const summaryInEl = document.getElementById('summary-in');
+const summaryOutEl = document.getElementById('summary-out');
+const summaryNetEl = document.getElementById('summary-net');
+const bottomNavEl = document.getElementById('bottom-nav');
+
+const screens = {
+  home: document.getElementById('view-home'),
+  entry: document.getElementById('view-entry'),
+  budget: document.getElementById('view-budget'),
+  account: document.getElementById('view-account')
+};
 
 // ---------- Init ----------
 function init() {
@@ -66,21 +80,39 @@ function bindEvents() {
 
   saveBtnEl.addEventListener('click', saveTransaction);
 
-  document.getElementById('nav-history').addEventListener('click', function () {
-    switchView('history');
+  document.getElementById('fab-add').addEventListener('click', function () {
+    showScreen('entry');
   });
-  document.getElementById('nav-back').addEventListener('click', function () {
-    switchView('entry');
+  document.getElementById('entry-close').addEventListener('click', function () {
+    showScreen('home');
+  });
+
+  bottomNavEl.querySelectorAll('.nav-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      bottomNavEl.querySelectorAll('.nav-btn').forEach(function (b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      showScreen(btn.dataset.tab);
+    });
+  });
+
+  document.querySelectorAll('.period-tab').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('.period-tab').forEach(function (b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      state.period = btn.dataset.period;
+      renderHistory();
+    });
   });
 
   window.addEventListener('online', handleOnline);
   window.addEventListener('offline', handleOffline);
 }
 
-function switchView(name) {
-  viewEntry.classList.toggle('active', name === 'entry');
-  viewHistory.classList.toggle('active', name === 'history');
-  keypadEl.style.display = name === 'entry' ? 'grid' : 'none';
+function showScreen(name) {
+  Object.keys(screens).forEach(function (key) {
+    screens[key].classList.toggle('active', key === name);
+  });
+  bottomNavEl.classList.toggle('hidden', name === 'entry');
 }
 
 // ---------- Categories ----------
@@ -140,6 +172,7 @@ function saveTransaction() {
   prependToHistoryCache(tx, true);
   resetEntryForm();
   renderHistory();
+  showScreen('home');
 
   if (navigator.onLine) {
     sendTransactions([tx])
@@ -252,7 +285,7 @@ function getHistoryCache() {
 function prependToHistoryCache(tx, pending) {
   const cache = getHistoryCache();
   cache.unshift(Object.assign({}, tx, { pending: !!pending }));
-  localStorage.setItem(LS_HISTORY_KEY, JSON.stringify(cache.slice(0, 50)));
+  localStorage.setItem(LS_HISTORY_KEY, JSON.stringify(cache.slice(0, 200)));
 }
 
 function markSynced(id) {
@@ -268,34 +301,109 @@ function markSynced(id) {
   localStorage.setItem(LS_HISTORY_KEY, JSON.stringify(updated));
 }
 
+// ---------- Period filtering ----------
+function isInPeriod(date, period) {
+  const now = new Date();
+  const d = new Date(date);
+  const thisMonth = now.getMonth();
+  const thisYear = now.getFullYear();
+
+  if (period === 'this') {
+    return d.getMonth() === thisMonth && d.getFullYear() === thisYear;
+  }
+  if (period === 'last') {
+    const lastMonthDate = new Date(thisYear, thisMonth - 1, 1);
+    return d.getMonth() === lastMonthDate.getMonth() && d.getFullYear() === lastMonthDate.getFullYear();
+  }
+  if (period === 'future') {
+    return d > now;
+  }
+  return true;
+}
+
+function renderSummary(items) {
+  let inflow = 0;
+  let outflow = 0;
+  items.forEach(function (item) {
+    if (item.amount >= 0) inflow += item.amount;
+    else outflow += Math.abs(item.amount);
+  });
+  const net = inflow - outflow;
+
+  summaryInEl.textContent = '+' + formatNumber(String(inflow)) + ' ₫';
+  summaryOutEl.textContent = '-' + formatNumber(String(outflow)) + ' ₫';
+  summaryNetEl.textContent = (net >= 0 ? '+' : '') + formatNumber(String(net)) + ' ₫';
+
+  const allBalance = getHistoryCache().reduce(function (sum, item) { return sum + item.amount; }, 0);
+  balanceAmountEl.textContent = formatNumber(String(allBalance)) + ' ₫';
+}
+
+function groupByDay(items) {
+  const groups = [];
+  const map = {};
+  items.forEach(function (item) {
+    const d = new Date(item.date);
+    const key = d.toISOString().slice(0, 10);
+    if (!map[key]) {
+      map[key] = { date: d, items: [] };
+      groups.push(map[key]);
+    }
+    map[key].items.push(item);
+  });
+  return groups;
+}
+
 function renderHistory() {
   const cache = getHistoryCache();
+  const filtered = cache.filter(function (item) { return isInPeriod(item.date, state.period); });
+
+  renderSummary(filtered);
+
   historyListEl.innerHTML = '';
 
-  if (cache.length === 0) {
+  if (filtered.length === 0) {
     historyEmptyEl.classList.remove('hidden');
     return;
   }
   historyEmptyEl.classList.add('hidden');
 
-  cache.forEach(function (item) {
-    const cat = getCategory(item.category);
-    const row = document.createElement('div');
-    row.className = 'history-item' + (item.pending ? ' pending-sync' : '');
+  const groups = groupByDay(filtered);
 
-    const dateStr = item.date ? new Date(item.date).toLocaleDateString('vi-VN') : '';
-    const amountStr = (item.amount >= 0 ? '+' : '') + formatNumber(String(item.amount)) + ' ₫';
+  groups.forEach(function (group) {
+    const groupEl = document.createElement('div');
+    groupEl.className = 'tx-day-group';
 
-    row.innerHTML =
-      '<div class="cat-icon">' + cat.icon + '</div>' +
-      '<div class="item-main">' +
-        '<div class="item-title">' + cat.label + '</div>' +
-        '<div class="item-note">' + (item.note || dateStr) + '</div>' +
-        (item.pending ? '<span class="pending-badge">Chờ đồng bộ</span>' : '') +
-      '</div>' +
-      '<div class="item-amount">' + amountStr + '</div>';
+    const header = document.createElement('div');
+    header.className = 'tx-day-header';
+    header.innerHTML =
+      '<div class="day-num">' + group.date.getDate() + '</div>' +
+      '<div class="day-meta">' +
+        '<div class="day-name">' + WEEKDAYS[group.date.getDay()] + '</div>' +
+        '<div class="day-month">Tháng ' + (group.date.getMonth() + 1) + ' ' + group.date.getFullYear() + '</div>' +
+      '</div>';
+    groupEl.appendChild(header);
 
-    historyListEl.appendChild(row);
+    group.items.forEach(function (item) {
+      const cat = getCategory(item.category);
+      const row = document.createElement('div');
+      row.className = 'history-item' + (item.pending ? ' pending-sync' : '');
+
+      const isPositive = item.amount >= 0;
+      const amountStr = (isPositive ? '+' : '') + formatNumber(String(item.amount)) + ' ₫';
+
+      row.innerHTML =
+        '<div class="cat-icon">' + cat.icon + '</div>' +
+        '<div class="item-main">' +
+          '<div class="item-title">' + cat.label + '</div>' +
+          (item.note ? '<div class="item-note">' + item.note + '</div>' : '') +
+          (item.pending ? '<span class="pending-badge">Chờ đồng bộ</span>' : '') +
+        '</div>' +
+        '<div class="item-amount' + (isPositive ? ' positive' : '') + '">' + amountStr + '</div>';
+
+      groupEl.appendChild(row);
+    });
+
+    historyListEl.appendChild(groupEl);
   });
 }
 
