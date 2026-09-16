@@ -76,15 +76,12 @@ chọn danh mục, ghi chú, ngày) dạng slide-up, ẩn thanh nav khi đang nh
   placeholder `AKfycb.../exec`).
 
 ## Việc cần làm tiếp theo
-1. Ánh xạ danh mục: `CATEGORIES` trong `app.js` hiện là danh sách cố định 9 mục
-   (food/shopping/...) bằng tiếng Anh, trong khi dữ liệu Money Lover thật dùng tên
-   danh mục tiếng Việt tự do (vd "Bữa tối", "Hoá đơn điện thoại", "Dịch vụ gia đình"…
-   — nhiều hơn 9 mục rất nhiều). Cần cân nhắc đổi `CATEGORIES` thành danh sách động
-   lấy từ dữ liệu thật, hoặc chấp nhận hiển thị tên danh mục thô cho giao dịch cũ.
-2. Deploy phần `frontend/` lên GitHub Pages (hoặc static host có HTTPS) để cài PWA
+1. Deploy phần `frontend/` lên GitHub Pages (hoặc static host có HTTPS) để cài PWA
    trên iOS (Add to Home Screen).
-3. Cân nhắc đồng bộ toàn bộ 5173 giao dịch cũ về `localStorage` (`?full=1`) để xem
+2. Cân nhắc đồng bộ toàn bộ 5173 giao dịch cũ về `localStorage` (`?full=1`) để xem
    lịch sử đầy đủ trong app thay vì chỉ 50 giao dịch gần nhất.
+3. `guessCategoryStyle_()` trong `app.js` chỉ đoán icon/màu theo từ khoá tiếng Việt
+   phổ biến — có thể bổ sung thêm từ khoá khi gặp danh mục lạ hiển thị icon 📦 mặc định.
 
 ## Lưu ý kỹ thuật
 - Apps Script tự thêm CORS header cho response JSON của doGet/doPost khi deploy "Anyone" — không cần cấu hình thêm.
@@ -101,7 +98,7 @@ chọn danh mục, ghi chú, ngày) dạng slide-up, ẩn thanh nav khi đang nh
 - [x] Tách 4 tab (Trang chủ/Giao dịch/Ngân sách/Tài khoản) thành 4 màn hình riêng đầy đủ chức năng (2026-09-16)
 - [x] Dựng lại Trang chủ giống hệt ảnh chụp Money Lover thật (2026-09-16)
 - [x] Kết nối backend thật vào sheet dữ liệu Money Lover 8 năm, deploy Apps Script 2 chiều, điền `API_URL` thật (2026-09-16)
-- [ ] Ánh xạ danh mục tiếng Việt thật vào `CATEGORIES` (xem mục "Việc cần làm tiếp theo")
+- [x] Nhận diện icon/màu cho tên danh mục tiếng Việt tự do từ dữ liệu thật, không còn gộp hết vào "Khác" (2026-09-16)
 - [ ] Test cài đặt PWA trên iOS Safari
 
 ## Lỗi đã gặp — tránh lặp lại
@@ -235,6 +232,12 @@ chọn danh mục, ghi chú, ngày) dạng slide-up, ẩn thanh nav khi đang nh
     dọn dẹp: xoá giao dịch test + khôi phục đúng Id ban đầu bằng 1 endpoint cleanup
     tạm thời (`?action=cleanup_temp_row2`), xác nhận qua GET `total:5173` khớp số
     liệu gốc, rồi gỡ bỏ nhánh cleanup khỏi code và deploy lại bản sạch (Phiên bản 4).
-  - Điền `API_URL` thật vào `frontend/app.js`. Ghi chú việc cần làm tiếp theo: ánh
-    xạ danh mục tiếng Việt thật (khác với `CATEGORIES` cố định hiện tại) và cân nhắc
-    đồng bộ toàn bộ 5173 giao dịch về local qua `?full=1`.
+  - Điền `API_URL` thật vào `frontend/app.js`. Test app với dữ liệu thật (dev server
+    local) → phát hiện toàn bộ danh mục hiển thị thành "Khác" 📦 vì `CATEGORIES` cố
+    định chỉ có 9 id tiếng Anh, không khớp tên danh mục tiếng Việt tự do trong dữ
+    liệu Money Lover thật. Sửa `getCategory()` để nhận cả tên tiếng Việt tự do, thêm
+    `guessCategoryStyle_()` đoán icon/màu theo từ khoá (bữa/ăn/cafe→🍜, hoá đơn/điện/
+    nước→🧾, mua sắm/áo/giày→🛍️, v.v.), hiển thị đúng tên thật thay vì gộp "Khác".
+    Test lại trên dev server: "Chăm sóc cá nhân", "Bữa tối", "Đàn nhạc", "Thiết bị
+    điện tử" đều hiện đúng icon/tên. Ghi chú việc còn lại: đồng bộ toàn bộ 5173 giao
+    dịch về local qua `?full=1` và deploy frontend lên host HTTPS để cài PWA iOS.

@@ -254,8 +254,45 @@ function renderCategories() {
   });
 }
 
-function getCategory(id) {
-  return CATEGORIES.find(function (c) { return c.id === id; }) || CATEGORIES[CATEGORIES.length - 1];
+// Nhận diện icon/màu cho các tên danh mục tiếng Việt tự do từ dữ liệu Money Lover
+// thật (không khớp với 9 id cố định trong CATEGORIES ở trên).
+const CATEGORY_KEYWORD_MAP = [
+  { icon: '🍜', color: '#1C2331', keywords: ['bữa', 'ăn', 'cafe', 'cà phê', 'trà sữa', 'ăn uống'] },
+  { icon: '🚌', color: '#2E86DE', keywords: ['di chuyển', 'taxi', 'grab', 'xăng', 'xe', 'vé'] },
+  { icon: '🛍️', color: '#27AE60', keywords: ['mua sắm', 'đồ dùng', 'áo', 'giày', 'quần'] },
+  { icon: '🧾', color: '#2C2C2C', keywords: ['hoá đơn', 'hóa đơn', 'điện', 'nước', 'internet', 'điện thoại', 'thuê nhà'] },
+  { icon: '💊', color: '#E74C3C', keywords: ['sức khỏe', 'sức khoẻ', 'thuốc', 'chăm sóc cá nhân'] },
+  { icon: '📚', color: '#8E44AD', keywords: ['giáo dục', 'học', 'sách'] },
+  { icon: '🎬', color: '#34495E', keywords: ['giải trí', 'phim', 'music', 'đàn nhạc', 'game'] },
+  { icon: '💰', color: '#F1A417', keywords: ['lương', 'thu nhập', 'thưởng', 'bán đồ'] },
+  { icon: '🏧', color: '#16A085', keywords: ['atm', 'rút tiền', 'chuyển tiền', 'ngân hàng'] },
+  { icon: '💻', color: '#5D6D7E', keywords: ['thiết bị điện tử', 'điện tử', 'laptop'] },
+  { icon: '❤️', color: '#C0392B', keywords: ['từ thiện', 'gia đình', 'vật nuôi'] }
+];
+
+function guessCategoryStyle_(name) {
+  const lower = (name || '').toLowerCase();
+  for (let i = 0; i < CATEGORY_KEYWORD_MAP.length; i++) {
+    const entry = CATEGORY_KEYWORD_MAP[i];
+    if (entry.keywords.some(function (kw) { return lower.indexOf(kw) !== -1; })) {
+      return { icon: entry.icon, color: entry.color };
+    }
+  }
+  return { icon: '📦', color: '#7F8C8D' };
+}
+
+// `key` có thể là id cố định trong CATEGORIES (giao dịch tạo từ app này) hoặc tên
+// danh mục tiếng Việt tự do lấy thẳng từ Google Sheet (giao dịch Money Lover cũ) —
+// trường hợp sau vẫn hiển thị đúng tên thật thay vì gộp hết vào "Khác".
+function getCategory(key) {
+  const byId = CATEGORIES.find(function (c) { return c.id === key; });
+  if (byId) return byId;
+
+  const byLabel = CATEGORIES.find(function (c) { return c.label.toLowerCase() === String(key || '').toLowerCase(); });
+  if (byLabel) return byLabel;
+
+  const style = guessCategoryStyle_(key);
+  return { id: key, label: key || 'Khác', icon: style.icon, color: style.color };
 }
 
 function coloredCatIcon(cat) {
