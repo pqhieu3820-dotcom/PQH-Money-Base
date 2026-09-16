@@ -182,6 +182,13 @@ html, body {
 .sync-indicator.pending { background: #E0A93E; }
 .sync-indicator.offline { background: var(--red); }
 
+.network-status-text {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--green);
+}
+.network-status-text.offline { color: var(--red); }
+
 .header-title {
   font-size: 16px;
   font-weight: 700;

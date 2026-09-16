@@ -61,14 +61,16 @@ chọn danh mục, ghi chú, ngày) dạng slide-up, ẩn thanh nav khi đang nh
 
 ## Lưu ý kỹ thuật
 - Apps Script tự thêm CORS header cho response JSON của doGet/doPost khi deploy "Anyone" — không cần cấu hình thêm.
-- `sw.js` bỏ qua cache cho mọi request tới `script.google.com` để dữ liệu API luôn tươi khi online.
-- Offline queue lưu trong `localStorage` key `moneybase_offline_queue`; cache lịch sử lưu ở key `moneybase_history_cache`; hạn mức ngân sách lưu ở key `moneybase_budgets`.
-- Khi có sự kiện `online`, app tự động POST toàn bộ hàng đợi lên Apps Script rồi xoá queue.
+- `sw.js` bỏ qua cache cho mọi request tới `script.google.com` để dữ liệu API luôn tươi khi online; cache-first cho toàn bộ file tĩnh (app shell) để mở được hoàn toàn offline trên iOS Safari/Android Chrome. Cache hiện tại: `moneybase-cache-v2`.
+- Offline queue lưu trong `localStorage` key **`offlineQueue`** (đổi tên từ `moneybase_offline_queue` ngày 16/9); cache lịch sử lưu ở key `moneybase_history_cache`; hạn mức ngân sách lưu ở key `moneybase_budgets`.
+- Hàm đồng bộ chính là `syncOfflineData()` trong `app.js`, được gắn vào **3 trigger** để khắc phục việc iOS Safari đóng băng tiến trình nền: sự kiện `online`, `visibilitychange` (khi app quay lại foreground), và ngay sau `DOMContentLoaded` (vừa mở app). Có cờ `state.isSyncing` để tránh chạy trùng khi nhiều trigger bắn gần nhau.
+- Nhãn trạng thái mạng thời gian thực (`#network-status-text`, xanh "Online"/đỏ "Offline") luôn hiển thị ở header Trang chủ, cập nhật qua `updateNetworkUI()`.
 
 ## Trạng thái
 - [x] Viết code 6 file theo yêu cầu (2026-09-16)
 - [x] Push code lên GitHub repo trên (2026-09-16)
 - [x] Redesign UI giống Money Lover, test qua browser mobile viewport (2026-09-16)
+- [x] Offline-first hoàn chỉnh: sw.js cache bền vững + app.js đồng bộ qua 3 trigger + nhãn Online/Offline (2026-09-16)
 - [x] Tách 4 tab (Trang chủ/Giao dịch/Ngân sách/Tài khoản) thành 4 màn hình riêng đầy đủ chức năng (2026-09-16)
 - [x] Dựng lại Trang chủ giống hệt ảnh chụp Money Lover thật (2026-09-16)
 - [ ] Điền `API_URL` thật sau khi deploy Apps Script
@@ -144,3 +146,18 @@ chọn danh mục, ghi chú, ngày) dạng slide-up, ẩn thanh nav khi đang nh
   khi nhấn — bỏ nền, chỉ giữ hiệu ứng mờ khi nhấn), tăng khoảng cách giữa 2 icon,
   và chỉnh badge số thông báo màu đỏ nổi đè lên góc trên-phải chuông (viền trắng)
   giống hệt ảnh. Test hiện thử badge "435" qua console để xác nhận vị trí đúng.
+- **15:36 chiều, 16/9/2026** — Người dùng yêu cầu hoàn thiện Offline-First: hoạt động
+  trơn tru trên iOS Safari và Android Chrome, tự động đồng bộ khi có mạng hoặc khi
+  vào lại app. Viết lại `sw.js`: cache từng file tĩnh riêng lẻ bằng `cache.add()`
+  thay vì `cache.addAll()` (tránh việc icon-192.png/icon-512.png chưa tồn tại làm
+  hỏng toàn bộ cài đặt Service Worker — lỗi tiềm ẩn phát hiện khi rà lại code cũ),
+  bump cache lên `v2`. Viết lại phần đồng bộ trong `app.js`: đổi tên key
+  `localStorage` thành `offlineQueue` theo đúng yêu cầu, đổi tên hàm
+  `syncOfflineQueue` → `syncOfflineData()`, thêm cờ `state.isSyncing` chống chạy
+  trùng, gắn hàm này vào đúng 3 trigger (`online`, `visibilitychange`,
+  `DOMContentLoaded`) để khắc phục việc iOS đóng băng JS chạy nền. Thêm nhãn nhỏ
+  "Online"/"Offline" (xanh/đỏ) luôn hiển thị ở header Trang chủ. Test bằng cách giả
+  lập `navigator.onLine = false` + bấm lưu giao dịch (xác nhận lưu đúng vào
+  `offlineQueue`), sau đó giả lập có mạng lại qua sự kiện `visibilitychange` và gọi
+  tay `syncOfflineData()` — xác nhận cả 2 đều kích hoạt request POST thật (thấy lỗi
+  CORS trong console vì `API_URL` còn là placeholder, chứng tỏ request đã được gửi).

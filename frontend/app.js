@@ -3,7 +3,7 @@
 // TODO: Dán URL Web App (Google Apps Script deployment) vào đây
 const API_URL = 'https://script.google.com/macros/s/AKfycb.../exec';
 
-const LS_QUEUE_KEY = 'moneybase_offline_queue';
+const LS_QUEUE_KEY = 'offlineQueue';
 const LS_HISTORY_KEY = 'moneybase_history_cache';
 const LS_BUDGET_KEY = 'moneybase_budgets';
 
@@ -34,7 +34,8 @@ const state = {
   period: 'this',
   balanceHidden: false,
   reportScope: 'month',
-  topScope: 'month'
+  topScope: 'month',
+  isSyncing: false
 };
 
 // ---------- DOM ----------
@@ -46,6 +47,7 @@ const saveBtnEl = document.getElementById('save-btn');
 const keypadEl = document.getElementById('keypad');
 const networkBannerEl = document.getElementById('network-banner');
 const syncIndicatorEl = document.getElementById('sync-indicator');
+const networkStatusTextEl = document.getElementById('network-status-text');
 const toastEl = document.getElementById('toast');
 const bottomNavEl = document.getElementById('bottom-nav');
 
@@ -101,6 +103,13 @@ function init() {
   updateNetworkUI();
   registerServiceWorker();
   loadHistory();
+
+  // 3) Vừa load xong trang (mở app) — nếu có mạng, đẩy ngay hàng đợi offline
+  // đã tích luỹ từ lần dùng offline trước đó, để dữ liệu "tự cập nhật lên"
+  // ngay khi vào lại app.
+  if (navigator.onLine) {
+    syncOfflineData();
+  }
 }
 
 function bindEvents() {
@@ -187,11 +196,27 @@ function bindEvents() {
       showToast('Đang ngoại tuyến, không thể đồng bộ');
       return;
     }
-    syncOfflineQueue();
+    syncOfflineData(true);
   });
 
+  // ---- 3 trigger đồng bộ để khắc phục việc iOS Safari đóng băng tiến trình nền ----
+
+  // 1) Có mạng trở lại trong khi đang mở app.
   window.addEventListener('online', handleOnline);
   window.addEventListener('offline', handleOffline);
+
+  // 2) App được chuyển từ nền ra trước (mở lại tab/app) — iOS thường không bắn
+  // sự kiện 'online' đáng tin cậy khi app đã bị đóng băng, nên phải tự kiểm tra
+  // lại mỗi khi tab trở nên visible.
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'visible') {
+      updateNetworkUI();
+      if (navigator.onLine) {
+        syncOfflineData();
+        loadHistory();
+      }
+    }
+  });
 }
 
 function setActiveNav(tab) {
@@ -371,26 +396,37 @@ function queueOffline(tx) {
   updateNetworkUI();
 }
 
-function syncOfflineQueue() {
+// Đọc offlineQueue từ localStorage và đẩy toàn bộ lên Apps Script.
+// Được gọi từ 3 nơi: sự kiện 'online', 'visibilitychange' (app quay lại
+// foreground), và ngay khi trang vừa load xong (DOMContentLoaded) — vì iOS
+// Safari hay đóng băng JS chạy nền nên không thể chỉ dựa vào 1 sự kiện duy nhất.
+function syncOfflineData(showEmptyToast) {
+  if (state.isSyncing) return;
+
   const queue = getQueue();
   if (queue.length === 0) {
-    showToast('Không có giao dịch nào cần đồng bộ');
+    if (showEmptyToast) showToast('Không có giao dịch nào cần đồng bộ');
     return;
   }
+  if (!navigator.onLine) return;
 
+  state.isSyncing = true;
   syncIndicatorEl.className = 'sync-indicator pending';
+
   sendTransactions(queue)
     .then(function () {
       queue.forEach(function (tx) { markSynced(tx.id); });
       saveQueue([]);
-      updateNetworkUI();
-      refreshCurrentScreen();
-      loadHistory();
       showToast('Đã đồng bộ ' + queue.length + ' giao dịch');
     })
     .catch(function () {
-      updateNetworkUI();
       showToast('Đồng bộ thất bại, thử lại sau');
+    })
+    .finally(function () {
+      state.isSyncing = false;
+      updateNetworkUI();
+      refreshCurrentScreen();
+      loadHistory();
     });
 }
 
@@ -809,7 +845,7 @@ function renderAccountScreen() {
 function handleOnline() {
   state.isOnline = true;
   updateNetworkUI();
-  syncOfflineQueue();
+  syncOfflineData();
   loadHistory();
 }
 
@@ -820,13 +856,20 @@ function handleOffline() {
 
 function updateNetworkUI() {
   const queue = getQueue();
-  if (!navigator.onLine) {
+  const online = navigator.onLine;
+
+  if (!online) {
     networkBannerEl.classList.remove('hidden');
     syncIndicatorEl.className = 'sync-indicator offline';
   } else {
     networkBannerEl.classList.add('hidden');
     syncIndicatorEl.className = 'sync-indicator' + (queue.length > 0 ? ' pending' : '');
   }
+
+  // Nhãn nhỏ Online (xanh) / Offline (đỏ) để theo dõi trạng thái mạng thực tế.
+  networkStatusTextEl.textContent = online ? 'Online' : 'Offline';
+  networkStatusTextEl.className = 'network-status-text' + (online ? '' : ' offline');
+
   if (screens.account.classList.contains('active')) renderAccountScreen();
 }
 
