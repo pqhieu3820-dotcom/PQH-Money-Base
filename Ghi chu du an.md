@@ -124,3 +124,9 @@ chọn danh mục, ghi chú, ngày) dạng slide-up, ẩn thanh nav khi đang nh
   toggle "Tuần" — đã fix để nhãn + tiêu đề đổi động theo `state.reportScope`.
   Test qua browser mobile viewport (bao gồm test nút ẩn số dư và toggle tuần/tháng)
   trước khi push.
+- **14:33 chiều, 16/9/2026** — Người dùng gửi ảnh thanh điều hướng dưới cùng thật của
+  Money Lover, yêu cầu làm y hệt và đẹp hơn. Thay icon emoji bằng SVG line-icon (nhà,
+  ví, layer, người), đổi nhãn "Trang chủ"→"Tổng quan", "Giao dịch"→"Sổ giao dịch" cho
+  khớp ảnh. Đổi thanh nav thành dạng pill nổi bo góc lớn (border-radius 26px, margin
+  2 bên + đáy, box-shadow), tab active có nền pill xám nhạt bao quanh icon+nhãn. Test
+  qua browser mobile viewport, xác nhận chuyển tab đổi đúng trạng thái active.
